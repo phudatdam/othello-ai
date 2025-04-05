@@ -1,84 +1,17 @@
-/* General layout */
-
 body {
-    display: flex;
-    flex-direction: column-reverse;
-    justify-content: center;
-    align-items: center;
-    margin: 0;
-    min-height: 100vh;
-}
-
-/* Action buttons */
-
-.actions {
-    margin: 50px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-evenly;
-    align-items: flex-end;
-}
-
-.action {
-    color: darkgray;
-    font-family: "Helvetica Neue", sans-serif;
-    font-size: 20px;
-    line-height: 20px;
-    font-weight: 300;
+    font-family: Arial, sans-serif;
     text-align: center;
-    text-decoration: none;
-    text-transform: uppercase;
-    padding: 20px;
-    width: 120px;
-}
-
-.action:hover {
-    background-color: darkgray;
-    color: white;
-    font-weight: 700;
-}
-
-.action[href=""] {
-    display: none;
-}
-
-/* Connect Four board */
-
-.board {
-    display: grid;
-    grid-template-columns: repeat(8, 50px);
-    grid-template-rows: repeat(8, 50px);
-    gap: 0;
-    border: 1px solid black;
-}
-
-.cell {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid black;
-}
-
-.disc {
-    width: 40px;
-    height: 40px;
-    border: 2px solid black;
-    border-radius: 50%;
-}
-
-.black {
-    background-color: black;
-}
-
-.white {
-    background-color: white;
-}
-
-.valid-move {
-    background-color: lightgreen;
-    border: 2px solid green;
-}
-
-.cell:has(.valid-move) {
-    cursor: pointer;
-}
+    background-color: #f0f0f0;
+  }
+  
+  canvas {
+    background-color: green;
+    margin: 20px auto;
+    display: block;
+    border: 2px solid #333;
+  }
+  
+  .controls {
+    margin-top: 10px;
+  }
+  
