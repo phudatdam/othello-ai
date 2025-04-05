@@ -34,7 +34,7 @@ def sync_state(websocket, game, connected):
         "type": "play",
         "turn": game.turn,
         "boardState": game.board_state,
-        "validMoves": game.get_valid_moves,
+        "validMoves": game.get_valid_moves(),
     }
     broadcast(connected, json.dumps(event))
 
@@ -54,6 +54,7 @@ async def play(websocket, game, player, connected, bot=None):
     """
     if bot and player == bot.player:
         # If the player is a bot, let it play its move
+        await asyncio.sleep(1.5)
         move = bot.play(game)
         if move is not None:
             game.play(player, move[0], move[1])
@@ -107,7 +108,7 @@ async def start(websocket):
             "type": "init",
             "join": join_key,
             "watch": watch_key,
-            "validMoves": game.get_valid_moves,
+            "validMoves": game.get_valid_moves(),
         }
         await websocket.send(json.dumps(event))
         # Receive and process moves from the first player.
@@ -134,7 +135,7 @@ async def start_with_bot(websocket):
         event = {
             "type": "init",
             "watch": watch_key,
-            "validMoves": game.get_valid_moves,
+            "validMoves": game.get_valid_moves(),
         }
         await websocket.send(json.dumps(event))
 
