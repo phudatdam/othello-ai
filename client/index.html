@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Best Othello App Ever</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="actions">
-      <a class="action bot" href="?solo=true">Solo</a>
-      <a class="action new" href="/othello/client">New</a>
-      <a class="action join" href="">Join</a>
-      <a class="action watch" href="">Watch</a>
-    </div>
-    <div class="board"></div>
-    <script src="main.js" type="module"></script>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Othello Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Othello Game</h1>
+  <canvas id="gameBoard" width="480" height="480"></canvas>
+
+  <div class="controls">
+    <button onclick="startNewGame()">Chơi mới</button>
+    <p>Lượt chơi: <span id="currentPlayer">Đen</span></p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
 </html>
