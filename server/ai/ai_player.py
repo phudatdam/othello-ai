@@ -18,5 +18,5 @@ class AIPlayer:
         Get a random move for the AI player. For testing.
 
         """
-        valid_moves = game.get_valid_moves()
+        valid_moves = game.get_valid_moves
         return random.choice(valid_moves) if valid_moves else None

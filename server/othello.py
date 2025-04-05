@@ -33,6 +33,7 @@ class Game:
         self.turn = BLACK
         self.winner = None
 
+    @property
     def get_valid_moves(self):
         return utils.get_valid_moves(self.board_state, self.turn)
 
@@ -47,7 +48,7 @@ class Game:
         """
         if player != self.turn:
             raise ValueError("It isn't your turn.")
+        
         # Game logic here
-        print("You clicked")
-        self.board_state = utils.make_move(self.board_state, row, col, player)
+        self.board_state[row][col] = player
         self.turn = WHITE if player == BLACK else BLACK
