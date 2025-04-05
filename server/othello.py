@@ -48,7 +48,13 @@ class Game:
         """
         if player != self.turn:
             raise ValueError("It isn't your turn.")
-        
         # Game logic here
-        self.board_state[row][col] = player
-        self.turn = WHITE if player == BLACK else BLACK
+        print("You clicked")
+        self.board_state = utils.make_move(self.board_state, row, col, player)
+        opponent = 3 - player
+        if utils.get_valid_moves(self.board_state, opponent):
+            self.turn = opponent
+        else: 
+            if not utils.get_valid_moves(self.board_state, player):
+                #handle game over
+                pass
