@@ -71,4 +71,11 @@ def get_score(board_state, player):
     return score
 
 def get_winner(board_state):
-    return None
+    black_score = get_score(board_state, BLACK)
+    white_score = get_score(board_state, WHITE)
+    if black_score > white_score:
+        return BLACK
+    elif white_score > black_score:
+        return WHITE
+    else:
+        return None

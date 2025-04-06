@@ -32,6 +32,7 @@ class Game:
         ]
         self.turn = BLACK
         self.winner = None
+        self.is_game_over = False
 
     @property
     def get_valid_moves(self):
@@ -57,4 +58,5 @@ class Game:
         else: 
             if not utils.get_valid_moves(self.board_state, player):
                 #handle game over
-                pass
+                self.is_game_over = True
+                self.winner = utils.get_winner(self.board_state)

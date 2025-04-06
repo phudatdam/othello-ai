@@ -1,6 +1,7 @@
 import asyncio
 import json
 import secrets
+import utils
 
 from websockets.asyncio.server import broadcast, serve
 
@@ -39,7 +40,7 @@ def sync_state(websocket, game, connected):
     broadcast(connected, json.dumps(event))
 
     # Check if game over.
-    if game.winner is not None:
+    if game.is_game_over:
         event = {
             "type": "win",
             "player": game.winner,
@@ -60,6 +61,10 @@ async def play(websocket, game, player, connected, bot=None):
 
             # Broadcast the updated game state to all connected clients
             sync_state(websocket, game, connected)
+
+            # Check if the opponent has valid moves
+            if not utils.get_valid_moves(game.board_state, 3 - player):
+                await play(websocket, game, bot.player, connected, bot=bot)
         return
 
     # Handle human player's moves
@@ -80,7 +85,7 @@ async def play(websocket, game, player, connected, bot=None):
         sync_state(websocket, game, connected)
         
         # If the opponent is a bot, let the bot play its move
-        if bot:
+        if bot and game.turn == bot.player:
             await play(websocket, game, WHITE, connected, bot=bot)
 
 

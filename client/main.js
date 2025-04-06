@@ -1,4 +1,4 @@
-import { renderBoard, displayValidMoves, updateStatus } from "./othello.js";
+import { BLACK, WHITE, renderBoard, displayValidMoves, updateStatus } from "./othello.js";
 
 function initGame(websocket) {
     websocket.addEventListener("open", () => {
@@ -45,7 +45,11 @@ function receiveMessages(board, websocket) {
                 updateStatus(event.boardState, event.turn);
                 break;
             case "win":
-                showMessage(`Player ${event.player} wins!`);
+                if (!event.player) {
+                    showMessage(`It's a draw!`);
+                } else {
+                    showMessage(`${event.player == BLACK ? 'Black' : 'White'} wins!`);
+                }
                 // No further messages are expected; close the WebSocket connection.
                 websocket.close(1000);
                 break;
