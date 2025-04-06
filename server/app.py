@@ -166,7 +166,7 @@ async def join(websocket, join_key):
     connected.add(websocket)
     try:
         # Send board state.
-        await sync_state(websocket, game, connected)
+        sync_state(websocket, game, connected)
         # Receive and process moves from the second player.
         await play(websocket, game, WHITE, connected)
     finally:
@@ -189,9 +189,10 @@ async def watch(websocket, watch_key):
     connected.add(websocket)
     try:
         # Send board state.
-        await sync_state(websocket, game, connected)
+        sync_state(websocket, game, connected)
         # Keep the connection open, but don't receive any messages.
-        await websocket.wait_closed()
+        while True:
+            await asyncio.sleep(0.1)  # Giảm CPU usage
     finally:
         connected.remove(websocket)
 

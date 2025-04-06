@@ -49,7 +49,6 @@ def make_move(board_state, row, col, player):
             temp_col += dc
         if pieces_to_flip and is_on_board(temp_row, temp_col) and board_state[temp_row][temp_col] == player:
             for i, j in pieces_to_flip:
-                print(i,j)
                 board_state[i][j] = player
 
     return board_state

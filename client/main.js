@@ -33,6 +33,8 @@ function receiveMessages(board, websocket) {
                 // Create links for inviting the second player and spectators.
                 document.querySelector(".join").href = "?join=" + event.join;
                 document.querySelector(".watch").href = "?watch=" + event.watch;
+                console.log("Join link:", "?join=" + event.join);
+                console.log("Watch link:", "?watch=" + event.watch);
                 // Highlight valid moves.
                 displayValidMoves(board, event.validMoves);
                 break;

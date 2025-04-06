@@ -48,7 +48,7 @@ class Game:
 
         """
         if player != self.turn:
-            raise ValueError("It isn't your turn.")
+            raise ValueError("It isn't your turn." + str(player) + " Turn:" + str(self.turn) )
         # Game logic here
         self.board_state = utils.make_move(self.board_state, row, col, player)
         opponent = 3 - player
