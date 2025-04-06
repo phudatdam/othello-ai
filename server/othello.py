@@ -50,7 +50,6 @@ class Game:
         if player != self.turn:
             raise ValueError("It isn't your turn.")
         # Game logic here
-        print("You clicked")
         self.board_state = utils.make_move(self.board_state, row, col, player)
         opponent = 3 - player
         if utils.get_valid_moves(self.board_state, opponent):

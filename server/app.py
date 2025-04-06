@@ -86,6 +86,7 @@ async def play(websocket, game, player, connected, bot=None):
         
         # If the opponent is a bot, let the bot play its move
         if bot and game.turn == bot.player:
+            await asyncio.sleep(1)
             await play(websocket, game, WHITE, connected, bot=bot)
 
 

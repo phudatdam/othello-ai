@@ -42,6 +42,7 @@ function receiveMessages(board, websocket) {
                 // Highlight valid moves.
                 displayValidMoves(board, event.validMoves);
                 // Update players' scores and turn.
+                console.log("Lượt hiện tại (event.turn):", event.turn);
                 updateStatus(event.boardState, event.turn);
                 break;
             case "win":
