@@ -1,7 +1,6 @@
 import asyncio
 import json
 import secrets
-import utils
 
 from websockets.asyncio.server import broadcast, serve
 
@@ -62,8 +61,8 @@ async def play(websocket, game, player, connected, bot=None):
             # Broadcast the updated game state to all connected clients
             sync_state(websocket, game, connected)
 
-            # Check if the opponent has valid moves
-            if not utils.get_valid_moves(game.board_state, 3 - player):
+            # Check if it's the bot's turn again
+            if game.turn == bot.player:
                 await play(websocket, game, bot.player, connected, bot=bot)
         return
 
