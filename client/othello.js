@@ -36,34 +36,6 @@ const displayValidMoves = (board, validMoves) => {
 };
 
 // Update players' scores and turn
-// Cập nhật điểm số và lượt chơi hiện tại
-const updateStatus = (boardState, turn) => {
-    let blackCount = 0;
-    let whiteCount = 0;
-  
-    // Duyệt toàn bộ bàn cờ để đếm số quân
-    for (let row = 0; row < boardState.length; row++) {
-      for (let col = 0; col < boardState[row].length; col++) {
-        const cell = boardState[row][col];
-        if (cell === BLACK) {
-          blackCount++;
-        } else if (cell === WHITE) {
-          whiteCount++;
-        }
-      }
-    }
-  
-    // Cập nhật điểm lên giao diện HTML
-    document.getElementById('black-score').textContent = blackCount;
-    document.getElementById('white-score').textContent = whiteCount;
-  
-    // Cập nhật lượt chơi
-    const turnDisplay = document.getElementById('current-turn');
-    if (turn === BLACK) 
-      turnDisplay.textContent = "Your turn";
-    else
-      turnDisplay.textContent = "Opponent turn";
-  };
-  
+const updateStatus = (boardState, turn) => {}
 
 export { EMPTY, BLACK, WHITE, renderBoard, displayValidMoves, updateStatus };
