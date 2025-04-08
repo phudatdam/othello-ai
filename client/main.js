@@ -1,4 +1,4 @@
-import { renderBoard, displayValidMoves, updateStatus } from "./othello.js";
+import { BLACK, WHITE, renderBoard, displayValidMoves, updateStatus } from "./othello.js";
 
 function initGame(websocket) {
     websocket.addEventListener("open", () => {
@@ -33,6 +33,8 @@ function receiveMessages(board, websocket) {
                 // Create links for inviting the second player and spectators.
                 document.querySelector(".join").href = "?join=" + event.join;
                 document.querySelector(".watch").href = "?watch=" + event.watch;
+                console.log("Join link:", "?join=" + event.join);
+                console.log("Watch link:", "?watch=" + event.watch);
                 // Highlight valid moves.
                 displayValidMoves(board, event.validMoves);
                 break;
@@ -42,10 +44,15 @@ function receiveMessages(board, websocket) {
                 // Highlight valid moves.
                 displayValidMoves(board, event.validMoves);
                 // Update players' scores and turn.
+                console.log("Lượt hiện tại (event.turn):", event.turn);
                 updateStatus(event.boardState, event.turn);
                 break;
             case "win":
-                showMessage(`Player ${event.player} wins!`);
+                if (!event.player) {
+                    showMessage(`It's a draw!`);
+                } else {
+                    showMessage(`${event.player == BLACK ? 'Black' : 'White'} wins!`);
+                }
                 // No further messages are expected; close the WebSocket connection.
                 websocket.close(1000);
                 break;

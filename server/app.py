@@ -39,7 +39,7 @@ def sync_state(websocket, game, connected):
     broadcast(connected, json.dumps(event))
 
     # Check if game over.
-    if game.winner is not None:
+    if game.is_game_over:
         event = {
             "type": "win",
             "player": game.winner,
@@ -60,6 +60,10 @@ async def play(websocket, game, player, connected, bot=None):
 
             # Broadcast the updated game state to all connected clients
             sync_state(websocket, game, connected)
+
+            # Check if it's the bot's turn again
+            if game.turn == bot.player:
+                await play(websocket, game, bot.player, connected, bot=bot)
         return
 
     # Handle human player's moves
@@ -80,7 +84,8 @@ async def play(websocket, game, player, connected, bot=None):
         sync_state(websocket, game, connected)
         
         # If the opponent is a bot, let the bot play its move
-        if bot:
+        if bot and game.turn == bot.player:
+            await asyncio.sleep(1)
             await play(websocket, game, WHITE, connected, bot=bot)
 
 
@@ -160,7 +165,7 @@ async def join(websocket, join_key):
     connected.add(websocket)
     try:
         # Send board state.
-        await sync_state(websocket, game, connected)
+        sync_state(websocket, game, connected)
         # Receive and process moves from the second player.
         await play(websocket, game, WHITE, connected)
     finally:
@@ -183,9 +188,10 @@ async def watch(websocket, watch_key):
     connected.add(websocket)
     try:
         # Send board state.
-        await sync_state(websocket, game, connected)
+        sync_state(websocket, game, connected)
         # Keep the connection open, but don't receive any messages.
-        await websocket.wait_closed()
+        while True:
+            await asyncio.sleep(0.1)  # Giảm CPU usage
     finally:
         connected.remove(websocket)
 
