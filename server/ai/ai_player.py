@@ -19,4 +19,6 @@ class AIPlayer:
 
         """
         valid_moves = game.get_valid_moves
+        print("Bot's options:")
+        print(valid_moves)
         return random.choice(valid_moves) if valid_moves else None
