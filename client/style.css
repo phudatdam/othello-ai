@@ -82,3 +82,40 @@ body {
 .cell:has(.valid-move) {
     cursor: pointer;
 }
+
+#scoreboard {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.score-container {
+  background-color: #2e2e2e;
+  padding: 20px 40px;
+  display: flex;
+  height: 43.2px;
+  width:  339.663px;
+  align-items: center;
+  gap: 60px;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  color: white;
+}
+
+
+
+.turn-status {
+  background-color: #2196f3;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: center;
+}
