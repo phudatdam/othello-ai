@@ -97,8 +97,13 @@ async def message_handler(websocket, game, player, connected, bot=None):
             message = await websocket.recv()
             event = json.loads(message)
 
-            if event["type"] != "play":
-                continue
+        # Broadcast the updated game state to all connected clients
+        sync_state(websocket, game, connected)
+        
+        # If the opponent is a bot, let the bot play its move
+        if bot and game.turn == bot.player:
+            await asyncio.sleep(1)
+            await play(websocket, game, WHITE, connected, bot=bot)
 
             async with game.lock:
                 if game.turn != player:

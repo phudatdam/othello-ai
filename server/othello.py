@@ -34,7 +34,6 @@ class Game:
         self.turn = BLACK
         self.winner = None
         self.is_game_over = False
-        self.lock = asyncio.Lock()
 
     @property
     def get_valid_moves(self):
@@ -51,6 +50,8 @@ class Game:
         """
         if player != self.turn:
             raise ValueError("It isn't your turn." + str(player) + " Turn:" + str(self.turn) )
+        if not utils.is_valid_move(self.board_state, player, row, col):
+            raise ValueError("Invalid move.")
         # Game logic here
         self.board_state = utils.make_move(self.board_state, row, col, player)
         opponent = 3 - player
