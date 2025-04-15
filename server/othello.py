@@ -1,4 +1,5 @@
 import utils
+import asyncio
 
 EMPTY = 0
 BLACK = 1
@@ -33,6 +34,7 @@ class Game:
         self.turn = BLACK
         self.winner = None
         self.is_game_over = False
+        self.lock = asyncio.Lock()
 
     @property
     def get_valid_moves(self):
