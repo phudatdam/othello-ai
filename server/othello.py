@@ -1,5 +1,4 @@
 import utils
-import asyncio
 
 EMPTY = 0
 BLACK = 1

@@ -1,17 +1,17 @@
 import asyncio
 import json
 import secrets
-import utils
-import websockets
 
 from websockets.asyncio.server import broadcast, serve
 
 from othello import BLACK, WHITE, Game
 from ai.ai_player import AIPlayer
 
+
 JOIN = {}
 
 WATCH = {}
+
 
 async def error(websocket, message):
     """
@@ -52,7 +52,6 @@ async def play(websocket, game, player, connected, bot=None):
     Receive and process moves from a player or bot.
 
     """
-    
     if bot and player == bot.player:
         # If the player is a bot, let it play its move
         move = bot.play(game)
@@ -62,8 +61,8 @@ async def play(websocket, game, player, connected, bot=None):
             # Broadcast the updated game state to all connected clients
             sync_state(websocket, game, connected)
 
-            # Check if the opponent has valid moves
-            if not utils.get_valid_moves(game.board_state, 3 - player):
+            # Check if it's the bot's turn again
+            if game.turn == bot.player:
                 await play(websocket, game, bot.player, connected, bot=bot)
         return
 
@@ -73,29 +72,13 @@ async def play(websocket, game, player, connected, bot=None):
         event = json.loads(message)
         assert event["type"] == "play"
 
-        async with game.lock:
-            try:
-                # Play the move.
-                game.play(player, event["row"], event["col"])
-                print(event)
-            except ValueError as exc:
-                # Send an "error" event if the move was illegal.
-                await error(websocket, str(exc))
-                continue
-
-            # Broadcast the updated game state to all connected clients
-            sync_state(websocket, game, connected)
-            
-            # If the opponent is a bot, let the bot play its move
-            if bot and game.turn == bot.player:
-                await asyncio.sleep(1)
-                await play(websocket, game, WHITE, connected, bot=bot)
-
-async def message_handler(websocket, game, player, connected, bot=None):
-    while True:
         try:
-            message = await websocket.recv()
-            event = json.loads(message)
+            # Play the move.
+            game.play(player, event["row"], event["col"])
+        except ValueError as exc:
+            # Send an "error" event if the move was illegal.
+            await error(websocket, str(exc))
+            continue
 
         # Broadcast the updated game state to all connected clients
         sync_state(websocket, game, connected)
@@ -105,31 +88,6 @@ async def message_handler(websocket, game, player, connected, bot=None):
             await asyncio.sleep(1)
             await play(websocket, game, WHITE, connected, bot=bot)
 
-            async with game.lock:
-                if game.turn != player:
-                    print(f"Ignored move from {'WHITE' if player == 2 else 'BLACK'} (not your turn)")
-                    continue
-
-                try:
-                    game.play(player, event["row"], event["col"])
-                    print(f"{'WHITE' if player == 2 else 'BLACK'} played", event)
-                    sync_state(websocket, game, connected)
-                except ValueError as exc:
-                    await error(websocket, str(exc))
-                    continue
-
-            # Xử lý bot nếu tới lượt nó
-            while bot and game.turn == bot.player:
-                await asyncio.sleep(1)
-                move = bot.play(game)
-                if move:
-                    async with game.lock:
-                        game.play(bot.player, move[0], move[1])
-                        sync_state(websocket, game, connected)
-
-        except websockets.exceptions.ConnectionClosed:
-            print("Connection closed")
-            break
 
 async def start(websocket):
     """
@@ -158,8 +116,7 @@ async def start(websocket):
         }
         await websocket.send(json.dumps(event))
         # Receive and process moves from the first player.
-        # await play(websocket, game, BLACK, connected)
-        await message_handler(websocket, game, BLACK, connected)
+        await play(websocket, game, BLACK, connected)
     finally:
         del JOIN[join_key]
         del WATCH[watch_key]
