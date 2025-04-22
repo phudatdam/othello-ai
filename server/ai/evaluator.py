@@ -30,21 +30,24 @@ def minimax(board_state, depth, isMax):
     if (depth > 3):
         return score
     
-    # If this maximizer's move  
-    if isMax:
-        best = -1000;
-        for move in utils.get_valid_moves(board_state, BLACK):
-            row, col = move
-            temp_board = utils.make_move(temp_board, row, col, BLACK)
-            best = max(best, minimax(temp_board, depth+1, not isMax));
-        return best
-    
-    # If this minimizer's move  
-    else:
-        best = 1000;
-        for move in utils.get_valid_moves(board_state, WHITE):
-            row, col = move
-            temp_board = utils.make_move(temp_board, row, col, WHITE)
-            best = min(best, minimax(temp_board, depth+1, not isMax));
-        return best
-    
+     # Xác định player hiện tại
+    player = WHITE if isMax else BLACK
+    valid_moves = utils.get_valid_moves(board_state, player)
+
+    if not valid_moves:
+        # Mất lượt -> chuyển cho đối thủ nhưng giữ nguyên board
+        return minimax(board_state, depth + 1, not isMax)
+
+    best = -1000 if isMax else 1000
+
+    for move in valid_moves:
+        row, col = move
+        temp_board = copy.deepcopy(board_state)
+        temp_board = utils.make_move(temp_board, row, col, player)
+        val = minimax(temp_board, depth + 1, not isMax)
+        if isMax:
+            best = max(best, val)
+        else:
+            best = min(best, val)
+
+    return best
