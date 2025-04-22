@@ -38,7 +38,7 @@ class AIPlayer:
             utils.make_move(temp_board, row, col, self.player)
 
             # Đánh giá trạng thái sau khi đi
-            value = evaluator.minimax(temp_board, 0, True)
+            value = evaluator.minimax(temp_board, 0, True, -1000, 1000)
 
             if value > bestVal:
                 bestVal = value

@@ -11,7 +11,7 @@ def evaluate(board_state):
     dif = utils.get_score(board_state, WHITE) - utils.get_score(board_state, BLACK)
     return dif
 
-def minimax(board_state, depth, isMax):
+def minimax(board_state, depth, isMax, alpha, beta):
     "MAX is WHITE, MIN is BLACK"
     score = evaluate(board_state);
     print("DEPTH =")
@@ -27,7 +27,7 @@ def minimax(board_state, depth, isMax):
     
     temp_board = copy.deepcopy(board_state)
 
-    if (depth > 3):
+    if (depth > 8):
         return score
     
      # Xác định player hiện tại
@@ -36,18 +36,31 @@ def minimax(board_state, depth, isMax):
 
     if not valid_moves:
         # Mất lượt -> chuyển cho đối thủ nhưng giữ nguyên board
-        return minimax(board_state, depth + 1, not isMax)
+        return minimax(board_state, depth + 1, not isMax, alpha, beta)
 
-    best = -1000 if isMax else 1000
-
-    for move in valid_moves:
-        row, col = move
-        temp_board = copy.deepcopy(board_state)
-        temp_board = utils.make_move(temp_board, row, col, player)
-        val = minimax(temp_board, depth + 1, not isMax)
-        if isMax:
+    #If this is MAX
+    if isMax:
+        best = -1000
+        for move in valid_moves:
+            row, col = move
+            temp_board = board_state
+            temp_board = utils.make_move(temp_board, row, col, player)
+            val = minimax(temp_board, depth+1, not isMax, alpha, beta)
             best = max(best, val)
-        else:
-            best = min(best, val)
-
+            alpha = max(alpha, best)
+            if beta <= alpha:
+                break
+            return best
+    else:
+        best = 1000
+        for move in valid_moves:
+            row, col = move
+            temp_board = board_state
+            temp_board = utils.make_move(temp_board, row, col, player)
+            val = minimax(temp_board, depth+1, not isMax, alpha, beta)
+            best = max(best, val)
+            beta = min(beta, best)
+            if beta <= alpha:
+                break
+            return best
     return best
