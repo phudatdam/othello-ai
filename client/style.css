@@ -82,3 +82,15 @@ body {
 .cell:has(.valid-move) {
     cursor: pointer;
 }
+
+.scoreboard {
+    font-family: "Helvetica Neue", sans-serif;
+    font-size: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #333;
+  }
+  .scoreboard span {
+    margin: 0 15px;
+  }

@@ -36,6 +36,12 @@ const displayValidMoves = (board, validMoves) => {
 };
 
 // Update players' scores and turn
-const updateStatus = (boardState, turn) => {}
+const updateStatus = (boardState, turn) => {
+    const blackScore = boardState.flat().filter(cell => cell === BLACK).length;
+    const whiteScore = boardState.flat().filter(cell => cell === WHITE).length;
+
+    document.getElementById("black-score").textContent = `⚫ Black: ${blackScore}`;
+    document.getElementById("white-score").textContent = `⚪ White: ${whiteScore}`;
+}
 
 export { EMPTY, BLACK, WHITE, renderBoard, displayValidMoves, updateStatus };
