@@ -27,8 +27,8 @@ def minimax(board_state, depth, isMax, alpha, beta):
     
     temp_board = copy.deepcopy(board_state)
 
-    if (depth > 8):
-        return score
+    if (depth > 5):
+       return score
     
      # Xác định player hiện tại
     player = WHITE if isMax else BLACK
@@ -43,24 +43,23 @@ def minimax(board_state, depth, isMax, alpha, beta):
         best = -1000
         for move in valid_moves:
             row, col = move
-            temp_board = board_state
+            temp_board = copy.deepcopy(board_state)
             temp_board = utils.make_move(temp_board, row, col, player)
             val = minimax(temp_board, depth+1, not isMax, alpha, beta)
             best = max(best, val)
             alpha = max(alpha, best)
             if beta <= alpha:
                 break
-            return best
+        return best
     else:
         best = 1000
         for move in valid_moves:
             row, col = move
-            temp_board = board_state
+            temp_board = copy.deepcopy(board_state)
             temp_board = utils.make_move(temp_board, row, col, player)
             val = minimax(temp_board, depth+1, not isMax, alpha, beta)
-            best = max(best, val)
+            best = min(best, val)
             beta = min(beta, best)
             if beta <= alpha:
                 break
-            return best
-    return best
+        return best
