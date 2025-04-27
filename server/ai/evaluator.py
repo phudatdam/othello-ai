@@ -5,29 +5,38 @@ The evaluate function should return a score based on the current game state.
 """
 import copy
 import utils
+import numpy as np
+from data_extractor import extract_features
 from othello import BLACK, WHITE
 
+WEIGHTS = np.array([1.0, 5.0])
+
 def evaluate(board_state):
-    dif = utils.get_score(board_state, WHITE) - utils.get_score(board_state, BLACK)
-    return dif
+    features = extract_features(board_state, WHITE)
+    print(features);
+    score = np.dot(WEIGHTS, features)
+    return score
 
 def minimax(board_state, depth, isMax, alpha, beta):
     "MAX is WHITE, MIN is BLACK"
     score = evaluate(board_state);
+    """
     print("DEPTH =")
     print(depth)
     print(isMax)
     print(score)
+    """
+    
     if not (utils.get_valid_moves(board_state, BLACK) and utils.get_valid_moves(board_state, WHITE)):
         if score == 0:
             return 0
         if score > 0:
-            return 64
-        return -64
+            return 100
+        return -100
     
     temp_board = copy.deepcopy(board_state)
 
-    if (depth > 5):
+    if (depth > 4):
        return score
     
      # Xác định player hiện tại
