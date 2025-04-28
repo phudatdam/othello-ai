@@ -21,7 +21,6 @@ def move_to_coords(move):
 
 def extract_features(board, player):
     features = [
-        coin_parity(board, player),
         corner_diff(board, player),
         mobility(board, player),
         frontier_discs(board, player),
@@ -41,19 +40,19 @@ def corner_diff(board, player):
         # Nếu board[r][c] == 0 => bỏ qua
 
     if player_corners + opponent_corners == 0: return 0  # Không ai chiếm góc nào => 0
-    return (player_corners - opponent_corners) # / (player_corners + opponent_corners)
+    return (player_corners - opponent_corners)  / (player_corners + opponent_corners)
 
 def coin_parity(board, player):
     player_score = utils.get_score(board, player)
     opponent_score = utils.get_score(board, 3 - player)
 
-    return (player_score - opponent_score) # / (player_score + opponent_score)
+    return (player_score - opponent_score)  / (player_score + opponent_score)
 
 def mobility(board, player):
     player_move_counts = utils.count_valid_moves(board, player)
     opponent_move_counts = utils.count_valid_moves(board, 3 - player)
     if player_move_counts + opponent_move_counts == 0: return 0
-    return (player_move_counts - opponent_move_counts) # / (player_move_counts + opponent_move_counts)
+    return (player_move_counts - opponent_move_counts)  / (player_move_counts + opponent_move_counts)
 
 def frontier_discs(board, player):
     opponent = 3 - player
@@ -78,14 +77,11 @@ def frontier_discs(board, player):
 
     if my_frontier + opponent_frontier == 0:
         return 0
-    return 100 * (my_frontier - opponent_frontier) # / (my_frontier + opponent_frontier)
+    return (my_frontier - opponent_frontier)  / (my_frontier + opponent_frontier)
 
 def stability(board, player):
     n = 8
     stable = [[False for _ in range(8)] for _ in range(8)]  # Ban đầu chưa ô nào stable
-
-    # Các hướng đi (trên, dưới, trái, phải)
-    directions = [(-1,0), (1,0), (0,-1), (0,1)]
 
     # Gán ổn định ban đầu từ các ô ở biên
     for r,c in CORNERS:
@@ -136,37 +132,40 @@ def stability(board, player):
     my_stable = sum(1 for i in range(n) for j in range(n) if board[i][j] == player and stable[i][j])
     op_stable = sum(1 for i in range(n) for j in range(n) if board[i][j] == oplayer and stable[i][j])
 
-    return op_stable #(my_stable - op_stable)  / (my_stable + op_stable + 1)
+    return (my_stable - op_stable)  / (my_stable + op_stable) if my_stable + op_stable != 0 else 0
 
 
 if __name__ == "__main__":
-    # Đọc dữ liệu từ file CSV
     df = pd.read_csv('othello_dataset.csv')
-
     features = []
     labels = []
+    phases = []
 
     for index, row in df.iterrows():
-        if index >= 1:
-            break
         game = Game()
         moves = [row['game_moves'][i:i+2] for i in range(0, len(row['game_moves']), 2)]
-        
-        for move_idx, move in enumerate(moves):
+        move_count = 0
+        phase = 0
+        for move in moves:
             coords = move_to_coords(move)
             if coords:
                 r, c = coords
                 game.board_state = utils.make_move(game.board_state, r, c, game.turn)
                 if utils.get_valid_moves(game.board_state, 3 - game.turn):
                     game.turn = 3 - game.turn
+                move_count += 1
+                if move_count in [10, 20, 30, 40, 50, 60]:  # Sau các mốc 10,20,30,40,50 moves
+                    feat = extract_features(game.board_state, WHITE)
+                    features.append(feat)
+                    phases.append(phase)
+                    labels.append(coin_parity(game.board_state, WHITE))
+                    phase += 1
 
-
-        feat = extract_features(game.board_state, WHITE)
-        features.append(feat)
-        labels.append(row['winner'])
-        # Lưu dữ liệu đặc trưng và nhãn vào file CSV
-        features_df = pd.DataFrame(features, columns=[
-        'coin_parity', 'corner_diff', 'mobility', 'frontier_discs', 'stability'
+    features_df = pd.DataFrame(features, columns=[
+        'corner_diff', 'mobility', 'frontier_discs', 'stability'
     ])
-    features_df['label'] = labels
+    features_df['phase'] = phases
+    features_df['score_diff'] = labels
+    
+
     features_df.to_csv('othello_features.csv', index=False)
