@@ -7,19 +7,13 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 
 # Đọc và tiền xử lý dữ liệu
 df = pd.read_csv('othello_features.csv')
-df['label'] = 100*(df['label'] == 1).astype(int)  # Chuyển label về 0/1
+df['label'] = (df['label'] == 1).astype(int)  # Chuyển label về 0/1
 
 weights_per_phase = []
 scalers = []  # Lưu scaler cho từng phase
 
 for phase in range(5,65):
     phase_data = df[df['phase'] == phase]
-    
-    # Kiểm tra đủ dữ liệu
-    if len(phase_data) < 50:
-        print(f"Phase {phase} skipped (only {len(phase_data)} samples)")
-        weights_per_phase.append(np.zeros(5))
-        continue
         
     # Chuẩn bị dữ liệu
     X = phase_data[['score_diff', 'corner_diff', 'mobility', 'frontier_discs', 'stability']]
@@ -53,5 +47,7 @@ for phase in range(5,65):
 rounded_weights = [np.round(w, 3) for w in weights_per_phase]
 print(rounded_weights)
 # Lưu weights và scalers
-np.save('phase_weights.npy', np.array(rounded_weights))
-np.save('phase_scalers.npy', np.array(scalers))
+df = pd.DataFrame(rounded_weights)
+
+# Save to CSV
+df.to_csv('phase_weights.csv', index=False)

@@ -156,7 +156,7 @@ if __name__ == "__main__":
                     game.turn = 3 - game.turn
                 feat = extract_features(game.board_state, WHITE)
                 features.append(feat)
-                labels.append(row['winner'])
+                labels.append(-row['winner'])
 
     features_df = pd.DataFrame(features, columns=[
         'score_diff','corner_diff', 'mobility', 'frontier_discs', 'stability','phase'

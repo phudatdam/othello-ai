@@ -12,13 +12,13 @@ from othello import BLACK, WHITE
 
 CORNERS = [(0,0), (0,7), (7,0), (7,7)]
 
-weights = np.load('phase_weights.npy')
+weights = pd.read_csv('phase_weights.csv', header=None).to_numpy()
 
 def evaluate(board_state, player):
     raw_features = extract_features(board_state, player)
     phase = raw_features[5]
     features = raw_features[:-1]
-    weight_index = phase - 5 
+    weight_index = phase
     phase_weights = weights[weight_index]
     score = np.dot(features, phase_weights)
     return score
@@ -43,7 +43,7 @@ def minimax(board_state, depth, isMax, alpha, beta):
     
     temp_board = copy.deepcopy(board_state)
 
-    if (depth >= 1 ):
+    if (depth >= 4 ):
        return score
     
      # Xác định player hiện tại

@@ -14,9 +14,7 @@ class AIPlayer:
         TODO: Implement AI algorithms (minimax search)
 
         """
-        test = self.findBestMove(game.board_state)
-        print('test', test)
-        return test
+        return self.findBestMove(game.board_state)
     
     def get_random_move(self, game):
         """
@@ -41,7 +39,7 @@ class AIPlayer:
 
             # Đánh giá trạng thái sau khi đi
             value = evaluator.minimax(temp_board, 0, True, -1000, 1000)
-            print('value', value)
+            
             if value > bestVal:
                 bestVal = value
                 bestMove = move
