@@ -20,11 +20,15 @@ def move_to_coords(move):
     return row, col
 
 def extract_features(board, player):
+    player_score = utils.get_score(board, player)
+    opponent_score = utils.get_score(board, 3 - player)
     features = [
+        (player_score - opponent_score)  / (player_score + opponent_score),
         corner_diff(board, player),
         mobility(board, player),
         frontier_discs(board, player),
         stability(board, player),
+        player_score + opponent_score
     ]
     return features
 
@@ -139,13 +143,10 @@ if __name__ == "__main__":
     df = pd.read_csv('othello_dataset.csv')
     features = []
     labels = []
-    phases = []
 
     for index, row in df.iterrows():
         game = Game()
         moves = [row['game_moves'][i:i+2] for i in range(0, len(row['game_moves']), 2)]
-        move_count = 0
-        phase = 0
         for move in moves:
             coords = move_to_coords(move)
             if coords:
@@ -153,19 +154,12 @@ if __name__ == "__main__":
                 game.board_state = utils.make_move(game.board_state, r, c, game.turn)
                 if utils.get_valid_moves(game.board_state, 3 - game.turn):
                     game.turn = 3 - game.turn
-                move_count += 1
-                if move_count in [10, 20, 30, 40, 50, 60]:  # Sau các mốc 10,20,30,40,50 moves
-                    feat = extract_features(game.board_state, WHITE)
-                    features.append(feat)
-                    phases.append(phase)
-                    labels.append(coin_parity(game.board_state, WHITE))
-                    phase += 1
+                feat = extract_features(game.board_state, WHITE)
+                features.append(feat)
+                labels.append(row['winner'])
 
     features_df = pd.DataFrame(features, columns=[
-        'corner_diff', 'mobility', 'frontier_discs', 'stability'
+        'score_diff','corner_diff', 'mobility', 'frontier_discs', 'stability','phase'
     ])
-    features_df['phase'] = phases
-    features_df['score_diff'] = labels
-    
-
+    features_df['label'] = labels
     features_df.to_csv('othello_features.csv', index=False)

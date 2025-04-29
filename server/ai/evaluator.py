@@ -12,33 +12,16 @@ from othello import BLACK, WHITE
 
 CORNERS = [(0,0), (0,7), (7,0), (7,7)]
 
-MANUAL_WEIGHTS = np.array([
-    [-1.3, 17.3, 94.1, -1.3],   # Phase 0
-    [-2.3, 18.7, 92.7, -0.14],   # Phase 1
-    [1.9, 21.9, 90.6, 5.7],   # Phase 2
-    [3, 24.8, 82.1, 8.5],   # Phase 3
-    [3, 21.5, 55.7, 14.4],   # Phase 4
-    [8.9, 0, 0, 65.9],  # Phase 5
-])
+weights = np.load('phase_weights.npy')
 
 def evaluate(board_state, player):
-    move_count = sum(1 for i in range(8) for j in range(8) if board_state[i][j] != 0)
-    phase = determine_phase(move_count)
-    features = extract_features(board_state, player)
-    
-    # Lấy weights thủ công theo phase
-    weights = MANUAL_WEIGHTS[phase]
-    
-    # Tính điểm không cần chuẩn hóa (vì weights đã được scale thủ công)
-    raw_score = np.dot(features, weights)
-    
-    return raw_score # Điều chỉnh hệ số theo thực nghiệm
-
-def determine_phase(move_count):
-    """Calculate game phase based on move count"""
-    if move_count < 10:
-        return 0
-    return min((move_count - 10) // 10, 5)
+    raw_features = extract_features(board_state, player)
+    phase = raw_features[5]
+    features = raw_features[:-1]
+    weight_index = phase - 5 
+    phase_weights = weights[weight_index]
+    score = np.dot(features, phase_weights)
+    return score
 
 def minimax(board_state, depth, isMax, alpha, beta):
     "MAX is WHITE, MIN is BLACK"
@@ -60,7 +43,7 @@ def minimax(board_state, depth, isMax, alpha, beta):
     
     temp_board = copy.deepcopy(board_state)
 
-    if (depth >= 4 ):
+    if (depth >= 1 ):
        return score
     
      # Xác định player hiện tại
