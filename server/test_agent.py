@@ -61,3 +61,4 @@ if __name__ == "__main__":
     print(f"WHITE (AIPlayer) thắng: {total_black_win}")
     print(f"BLACK (RandomPlayer) thắng: {total_white_win}")
     print(f"Hòa: {total_draw}")
+

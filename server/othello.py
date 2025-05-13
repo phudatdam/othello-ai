@@ -33,6 +33,9 @@ class Game:
         self.turn = BLACK
         self.winner = None
         self.is_game_over = False
+        self.board_x = 8
+        self.board_y = 8
+        #board_x = board_y = n = 8
 
     @property
     def get_valid_moves(self):
@@ -61,3 +64,11 @@ class Game:
                 #handle game over
                 self.is_game_over = True
                 self.winner = utils.get_winner(self.board_state)
+                
+                
+    def getBoardSize(self):
+        return (self.board_x, self.board_y)
+    
+    def getActionSize(self):
+        # Return number of actions, n is the board size and +1 is for no-op action
+        return self.board_x * self.board_y + 1
