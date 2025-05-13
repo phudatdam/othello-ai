@@ -2,12 +2,6 @@ import random
 import utils
 import copy
 from ai import evaluator
-<<<<<<< Updated upstream
-=======
-import numpy as np
-import pickle
-from collections import defaultdict
->>>>>>> Stashed changes
 
 class AIPlayer:
     def __init__(self, player):
