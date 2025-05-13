@@ -221,7 +221,7 @@ async def handler(websocket):
 
 
 async def main():
-    async with serve(handler, "", 8001) as server:
+    async with serve(handler, "0.0.0.0", 8001) as server:
         await server.serve_forever()
 
 

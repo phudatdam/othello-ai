@@ -3,6 +3,14 @@ from gymnasium import spaces
 import numpy as np
 from othello import Game, BLACK, WHITE  # Import lớp Game của bạn
 
+
+"""
+reset: bắt đầu 1 trò chơi mới
+_get_obs: trả về trạng thái
+get_reward: phần thưởng
+render: hiển thị bàn cờ
+"""
+
 class OthelloEnv(gym.Env):
     metadata = {'render_modes': ['human', 'rgb_array'], 'render_fps': 4}
 
@@ -34,6 +42,9 @@ class OthelloEnv(gym.Env):
 
     # thực hiện hành động, cập nhật trạng thái trò chơi, trả về thông tin phần thưởng
     def step(self, action):
+
+        #action = 8*row+col
+
         row = action // self.board_size
         col = action % self.board_size
         player = self.game.turn

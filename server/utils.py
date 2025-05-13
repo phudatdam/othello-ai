@@ -37,6 +37,10 @@ def get_valid_moves(board_state, player):
     valid_moves = [(row, col) for row in range(8) for col in range(8) if is_valid_move(board_state, player, row, col)]
     return valid_moves
 
+def count_valid_moves(board_state, player):
+    """Đếm số nước đi hợp lệ mà không tạo danh sách."""
+    return sum(1 for row in range(8) for col in range(8) if is_valid_move(board_state, player, row, col))
+
 def make_move(board_state, row, col, player):
     board_state[row][col] = player
     opponent = 3 - player

@@ -6,7 +6,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import os
 
+
 othello_datasets = OthelloDataSet(csv_file='othello_tensor_datasets.csv')
+
 Train_size = int(0.8*len(othello_datasets))
 val_size = int(0.1*len(othello_datasets))
 test_size = len(othello_datasets) - Train_size - val_size
@@ -180,9 +182,5 @@ class ValueNetwork(nn):
             file_name = f'ResNet_cifar10_epoch{epoch+1}.pth'
             full_path = os.path.join(save_folder, file_name)
             torch.save(self.nnet.state_dict(), full_path) # Provide the model's state_dict and a file path
+
             print(f'Epoch [{epoch+1}/{args.num_epochs}], Train Loss: {train_loss_epoch:.4f}, Train Accuracy: {train_accuracy:.2f}%, Val Loss: {val_loss_epoch:.4f}, Val Accuracy: {val_accuracy:.2f}%')
-                
-
-
-
-
