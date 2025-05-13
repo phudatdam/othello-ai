@@ -25,15 +25,24 @@ def evaluate(board_state, player):
 
 def minimax(board_state, depth, isMax, alpha, beta):
     "MAX is WHITE, MIN is BLACK"
+<<<<<<< Updated upstream
     score = evaluate(board_state, WHITE if isMax else BLACK);
     
+=======
+    score = evaluate(board_state);
+    """
+>>>>>>> Stashed changes
     print("DEPTH =")
     print(depth)
     print(isMax)
     print(score)
+<<<<<<< Updated upstream
     
     
     
+=======
+    """
+>>>>>>> Stashed changes
     if not (utils.get_valid_moves(board_state, BLACK) and utils.get_valid_moves(board_state, WHITE)):
         if score == 0:
             return 0

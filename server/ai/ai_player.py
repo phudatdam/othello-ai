@@ -2,6 +2,12 @@ import random
 import utils
 import copy
 from ai import evaluator
+<<<<<<< Updated upstream
+=======
+import numpy as np
+import pickle
+from collections import defaultdict
+>>>>>>> Stashed changes
 
 class AIPlayer:
     def __init__(self, player):
@@ -45,3 +51,64 @@ class AIPlayer:
                 bestMove = move
 
         return bestMove
+<<<<<<< Updated upstream
+=======
+    
+class RandomPlayer():
+
+    def __init__(self, game):
+        self.game = game
+
+    def get_random_move(self, game):
+        """
+        Get a random move for the AI player. For testing.
+
+        """
+        valid_moves = game.get_valid_moves
+        #print(evaluator.evaluate(game.board_state))
+        return random.choice(valid_moves) if valid_moves else None
+
+    def play(self, game):
+        """
+        Args:
+        board: np.ndarray
+            Board of size n x n [6x6 in this case]
+
+        Returns:
+            a: int
+            Randomly chosen move
+        """
+        return self.get_random_move(game)
+    
+class QLearningPlayer:
+    def __init__(self, player, q_table_path, board_size=8):
+        self.player = player
+        self.board_size = board_size
+
+        # Load Q-table từ file
+        with open(q_table_path, 'rb') as f:
+            q_dict = pickle.load(f)
+            self.Q = defaultdict(lambda: defaultdict(float), q_dict)
+
+    def get_state_id(self, board, turn):
+        board = tuple(np.array(board).flatten())
+        return (board, turn)
+
+    def play(self, game):
+        valid_moves = game.get_valid_moves
+        if not valid_moves:
+            return None  # Bắt buộc phải pass
+
+        obs = {'board': game.board_state, 'turn': self.player}
+        state = self.get_state_id(obs['board'], obs['turn'])
+        q_values = self.Q[state]
+
+        # Chuyển valid_moves -> valid_actions
+        valid_actions = [r * self.board_size + c for r, c in valid_moves]
+
+        # Chọn action có Q-value cao nhất
+        best_action = max(valid_actions, key=lambda a: q_values[a])
+
+        # Chuyển lại thành (row, col)
+        return best_action // self.board_size, best_action % self.board_size
+>>>>>>> Stashed changes
