@@ -16,21 +16,19 @@ CORNERS = [(0,0), (0,7), (7,0), (7,7)]
 weights = pd.read_csv('phase_weights.csv', header=None).to_numpy()
 
 def evaluate(board_state, player):
-    raw_features = extract_features(board_state, player)
-    phase = raw_features[5]
-    features = raw_features[:-1]
-    weight_index = phase
-    phase_weights = weights[weight_index]
-    score = np.dot(features, phase_weights)
-    return score
+    dif = utils.get_score(board_state, WHITE) - utils.get_score(board_state, BLACK)
+    return dif
 
 def minimax(board_state, depth, isMax, alpha, beta):
     "MAX is WHITE, MIN is BLACK"
 
     score = evaluate(board_state, WHITE if isMax else BLACK);
-    
-
-    
+    """
+    print("DEPTH =")
+    print(depth)
+    print(isMax)
+    print(score)
+    """
 
     if not (utils.get_valid_moves(board_state, BLACK) and utils.get_valid_moves(board_state, WHITE)):
         if score == 0:
@@ -42,7 +40,7 @@ def minimax(board_state, depth, isMax, alpha, beta):
     
     temp_board = copy.deepcopy(board_state)
 
-    if (depth >= 4 ):
+    if (depth >= 3 ):
 
        return score
     

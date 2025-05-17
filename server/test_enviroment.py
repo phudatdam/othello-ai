@@ -72,9 +72,9 @@ class OthelloEnv(gym.Env):
     def _get_reward(self):
         if self.game.is_game_over:
             if self.game.winner == BLACK:
-                return 100
-            elif self.game.winner == WHITE:
                 return -100
+            elif self.game.winner == WHITE:
+                return 100
             else:
                 return 0  # Hòa
         return 0

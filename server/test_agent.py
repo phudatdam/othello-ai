@@ -7,13 +7,13 @@ if __name__ == "__main__":
     total_white_win = 0
     total_draw = 0
 
-    num_games = 20
+    num_games = 1000
 
     for game_index in range(num_games):
         print(f"\n--- Game {game_index + 1} ---")
 
         env = OthelloEnv()
-        ai_agent_white = QLearningPlayer(WHITE, q_table_path="q_table.pkl")
+        ai_agent_white = QLearningPlayer(WHITE, q_table_path="q_table_final.pkl")
         random_agent_black = RandomPlayer(env.game)
 
         observation, info = env.reset()
@@ -38,7 +38,7 @@ if __name__ == "__main__":
             done = terminated or truncated
             observation = next_observation
             current_player = 3 - current_player  # Đổi lượt chơi
-            env.render()
+            #env.render()
 
 
 

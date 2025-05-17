@@ -72,3 +72,6 @@ class Game:
     def getActionSize(self):
         # Return number of actions, n is the board size and +1 is for no-op action
         return self.board_x * self.board_y + 1
+    
+    def get_winner(self):
+        return utils.get_winner(self.board_state)
