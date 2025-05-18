@@ -1,4 +1,4 @@
-from test_enviroment import OthelloEnv  # Môi trường Othello
+from server.test_environment import OthelloEnv  # Môi trường Othello
 from othello import BLACK, WHITE
 from ai.ai_player import QLearningPlayer, RandomPlayer  # Player của bạn
 

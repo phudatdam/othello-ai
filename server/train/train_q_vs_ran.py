@@ -1,4 +1,4 @@
-from test_enviroment import OthelloEnv  # Môi trường Othello
+from test_environment import OthelloEnv  # Môi trường Othello
 from othello import BLACK, WHITE
 from q_learning import QNetworkAgent, TrainingMetrics  # Agent dùng mạng nơ-ron
 from ai.ai_player import RandomPlayer  # Random player
@@ -13,7 +13,7 @@ if __name__ == "__main__":
     total_white_win = 0
     total_draw = 0
 
-    num_games = 2000
+    num_games = 1
 
 
     # Tải model đã huấn luyện

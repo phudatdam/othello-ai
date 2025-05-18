@@ -1,5 +1,5 @@
 import utils
-
+import copy
 EMPTY = 0
 BLACK = 1
 WHITE = 2
@@ -36,6 +36,14 @@ class Game:
         self.board_x = 8
         self.board_y = 8
         #board_x = board_y = n = 8
+
+    def deepcopy(self):
+        """Tạo bản sao sâu của trạng thái game."""
+        new_game = Game()
+        new_game.board_state = copy.deepcopy(self.board_state)
+        new_game.turn = self.turn
+        # Sao chép các thuộc tính khác nếu có
+        return new_game
 
     @property
     def get_valid_moves(self):

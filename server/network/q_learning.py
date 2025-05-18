@@ -139,5 +139,3 @@ class QNetworkAgent:
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-
-        
