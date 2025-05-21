@@ -1,7 +1,8 @@
 from test_environment import OthelloEnv  # Môi trường Othello
 from othello import BLACK, WHITE
-from q_learning import QNetworkAgent, TrainingMetrics  # Agent dùng mạng nơ-ron
-from ai.ai_player import RandomPlayer  # Random player
+from network.q_learning import QNetworkAgent  # Agent dùng mạng nơ-ron
+from network.metrics import TrainingMetrics
+from ai.ai_player import RandomPlayer, AIPlayer  # Random player
 import os
 import torch
 
@@ -13,8 +14,7 @@ if __name__ == "__main__":
     total_white_win = 0
     total_draw = 0
 
-    num_games = 1
-
+    num_games = 100
 
     # Tải model đã huấn luyện
     agent_white = QNetworkAgent()
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     for game_index in range(num_games):
         env = OthelloEnv()
-        random_agent_black = RandomPlayer(env.game)
+        random_agent_black = AIPlayer(BLACK)
 
         observation, info = env.reset()
         done = False
@@ -38,14 +38,17 @@ if __name__ == "__main__":
         while not done:
             if current_player == WHITE:
                 # Agent dùng mạng nơ-ron
+                # Observe state
                 state = agent_white.encode_state(observation)
+    
                 valid_moves = [r * 8 + c for r, c in env.game.get_valid_moves]
 
                 if valid_moves:
+                    # Select action
                     action = agent_white.choose_action(state, valid_moves)
                     row, col = divmod(action, env.board_size)
                 else:
-                    action = env.action_space.n - 1  # Pass
+                    action = 64  # Pass
                     row, col = None, None
             else:
                 move = random_agent_black.play(env.game)
@@ -54,7 +57,7 @@ if __name__ == "__main__":
                     action = row * env.board_size + col
                 else:
                     row, col = None, None
-                    action = env.action_space.n - 1  # Pass
+                    action = 64  # Pass
 
             # Thực hiện hành động
             next_observation, reward, terminated, truncated, info = env.step(action)
@@ -89,11 +92,6 @@ if __name__ == "__main__":
             total_black_win += 1
         else:
             total_draw += 1
-
-        if agent_white.epsilon > agent_white.epsilon_min:
-                    agent_white.epsilon -= agent_white.epsilon_decay
-
-        win_rate = total_white_win / (game_index + 1)
     
         # Sau mỗi game
         win_rate = total_white_win / (game_index + 1)
@@ -105,7 +103,7 @@ if __name__ == "__main__":
         )
         
         # Vẽ biểu đồ mỗi 50 game
-        if game_index % 50 == 0 and game_index > 0:
+        if game_index % 1 == 0 and game_index > 0:
             metrics.plot()
             print(f"Đã lưu biểu đồ tại training_metrics_{game_index}.png")
             

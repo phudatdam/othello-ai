@@ -5,8 +5,8 @@ from ai import evaluator
 import numpy as np
 import pickle
 from collections import defaultdict
-import pickle
-
+import torch
+from network.q_learning import QNetwork
 class AIPlayer:
     def __init__(self, player):
         self.player = player
@@ -44,7 +44,7 @@ class AIPlayer:
             utils.make_move(temp_board, row, col, self.player)
 
             # Đánh giá trạng thái sau khi đi
-            value = evaluator.minimax(temp_board, 0, True, -1000, 1000)
+            value = evaluator.minimax(temp_board, 0, False, -1000, 1000)
             
             if value > bestVal:
                 bestVal = value
@@ -80,40 +80,40 @@ class RandomPlayer():
 
         return self.get_random_move(game)
     
+model_path = "models/q_network.pt"
 class QLearningPlayer:
-    def __init__(self, player, q_table_path, board_size=8):
+    def __init__(self, player):
         self.player = player
-        self.board_size = board_size
+        self.board_size = 8
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Load Q-table từ file
-        with open(q_table_path, 'rb') as f:
-            q_dict = pickle.load(f)
-            self.Q = defaultdict(lambda: defaultdict(float), q_dict)
+        # Load Q-network
+        self.model = QNetwork();
+        self.model.load_state_dict(torch.load(model_path))
+        self.model.eval()  # Set model to evaluation mode
 
-    def get_state_id(self, board, turn):
-        board = tuple(np.array(board).flatten())
-        return (board, turn)
+    def get_state_tensor(self, board, turn):
+        """
+        Chuyển bàn cờ thành tensor phù hợp để đưa vào mạng.
+        Có thể điều chỉnh encode cho phù hợp với cách huấn luyện trước đó.
+        """
+        state = np.array(board).flatten()
+        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)  # shape: (1, 64) hoặc (1, 128), v.v.
+        return state_tensor
 
     def play(self, game):
         valid_moves = game.get_valid_moves
         if not valid_moves:
-            return None  # Bắt buộc phải pass
+            return None
 
-        obs = {'board': game.board_state, 'turn': self.player}
-        state = self.get_state_id(obs['board'], obs['turn'])
-        q_values = self.Q[state]
+        board = np.array(game.board_state)
 
-        # Chuyển valid_moves -> valid_actions
-        valid_actions = [r * self.board_size + c for r, c in valid_moves]
+        state_tensor = self.get_state_tensor(board, self.player)
 
-        # Chọn action có Q-value cao nhất
-        best_action = max(valid_actions, key=lambda a: q_values[a])
+        with torch.no_grad():
+            q_values = self.model(state_tensor).cpu().numpy().flatten()
 
-        # Chuyển lại thành (row, col)
-        return best_action // self.board_size, best_action % self.board_size
-
-
-    
-
-        return self.get_random_move(game)
+        # Lọc Q-values theo hành động hợp lệ
+        best_action = max(valid_moves, key=lambda a: q_values[a[0] * 8 + a[1]])
+        return best_action
 

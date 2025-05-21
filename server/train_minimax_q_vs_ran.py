@@ -1,7 +1,7 @@
 import os
 import torch
 import numpy as np
-from test_environment import OthelloEnv
+from server.train.test_environment import OthelloEnv
 from ai.ai_player import RandomPlayer
 from minimax_q_learning import MinimaxQAgent
 from q_learning import TrainingMetrics
