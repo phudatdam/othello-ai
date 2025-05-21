@@ -1,10 +1,10 @@
 import os
 import torch
 import numpy as np
-from server.train.test_environment import OthelloEnv
+from test_environment import OthelloEnv
 from ai.ai_player import RandomPlayer
-from minimax_q_learning import MinimaxQAgent
-from q_learning import TrainingMetrics
+from network.minimax_q_learning import MinimaxQAgent
+from network.metrics import TrainingMetrics
 WHITE = 2
 BLACK = 1
 MODEL_PATH = "models/minimax_q_network.pt"

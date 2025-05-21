@@ -32,7 +32,6 @@ def minimax(board_state, depth, isMax, alpha, beta):
         if score == 0:
             return 0
         if score > 0:
-
             return 1000
         return -1000
     

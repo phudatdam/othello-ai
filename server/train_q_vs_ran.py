@@ -2,10 +2,10 @@ from test_environment import OthelloEnv  # Môi trường Othello
 from othello import BLACK, WHITE
 from network.q_learning import QNetworkAgent  # Agent dùng mạng nơ-ron
 from network.metrics import TrainingMetrics
-from ai.ai_player import RandomPlayer, AIPlayer  # Random player
+from ai.ai_player import RandomPlayer, MinimaxPlayer  # Random player
 import os
 import torch
-
+BATCH_SIZE=32
 MODEL_PATH = "models/q_network.pt"
 
 if __name__ == "__main__":
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     total_white_win = 0
     total_draw = 0
 
-    num_games = 100
+    num_games = 200
 
     # Tải model đã huấn luyện
     agent_white = QNetworkAgent()
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     for game_index in range(num_games):
         env = OthelloEnv()
-        random_agent_black = AIPlayer(BLACK)
+        random_agent_black = MinimaxPlayer(BLACK)
 
         observation, info = env.reset()
         done = False
@@ -37,44 +37,32 @@ if __name__ == "__main__":
 
         while not done:
             if current_player == WHITE:
-                # Agent dùng mạng nơ-ron
-                # Observe state
                 state = agent_white.encode_state(observation)
-    
                 valid_moves = [r * 8 + c for r, c in env.game.get_valid_moves]
-
                 if valid_moves:
-                    # Select action
                     action = agent_white.choose_action(state, valid_moves)
-                    row, col = divmod(action, env.board_size)
                 else:
-                    action = 64  # Pass
-                    row, col = None, None
+                    action = env.action_space.n - 1  # Pass (nếu bạn định nghĩa pass là action 64)
+                next_observation, reward, terminated, truncated, info = env.step(action)
+                done = terminated or truncated
+                next_state = agent_white.encode_state(next_observation)
+                agent_white.replay_buffer_save(
+                    state=state,
+                    action=action,
+                    reward=reward,
+                    next_state=next_state,
+                    done=done
+                )
+                # Train ngay sau lượt của WHITE
             else:
                 move = random_agent_black.play(env.game)
                 if move is not None:
                     row, col = move
                     action = row * env.board_size + col
                 else:
-                    row, col = None, None
-                    action = 64  # Pass
-
-            # Thực hiện hành động
-            next_observation, reward, terminated, truncated, info = env.step(action)
-            done = terminated or truncated
-            next_state = agent_white.encode_state(next_observation)
-            next_valid_moves = [r * 8 + c for r, c in env.game.get_valid_moves]
-
-            # Nếu WHITE là người vừa đi, thì train
-            if current_player == WHITE:
-                agent_white.train(
-                    state=state,
-                    action=action,
-                    reward=reward,
-                    next_state=next_state,
-                    done=done,
-                    next_valid_moves=next_valid_moves
-                )
+                    action = env.action_space.n - 1  # Pass
+                next_observation, reward, terminated, truncated, info = env.step(action)
+                done = terminated or truncated
 
             observation = next_observation
             current_player = 3 - current_player
@@ -94,6 +82,8 @@ if __name__ == "__main__":
             total_draw += 1
     
         # Sau mỗi game
+        if len(agent_white.memory) > BATCH_SIZE:
+                    agent_white.replay(BATCH_SIZE)
         win_rate = total_white_win / (game_index + 1)
         metrics.update(
             win_rate=win_rate,
@@ -101,9 +91,10 @@ if __name__ == "__main__":
             epsilon=agent_white.epsilon,
             reward=total_reward
         )
-        
+        if len(agent_white.memory) > BATCH_SIZE:
+                agent_white.replay(BATCH_SIZE)
         # Vẽ biểu đồ mỗi 50 game
-        if game_index % 1 == 0 and game_index > 0:
+        if game_index % 5 == 0 and game_index > 0:
             metrics.plot()
             print(f"Đã lưu biểu đồ tại training_metrics_{game_index}.png")
             

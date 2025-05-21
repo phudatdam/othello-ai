@@ -6,8 +6,8 @@ import numpy as np
 import pickle
 from collections import defaultdict
 import torch
-from network.q_learning import QNetwork
-class AIPlayer:
+from network.q_learning import QNetwork, QNetworkAgent
+class MinimaxPlayer:
     def __init__(self, player):
         self.player = player
 
@@ -85,21 +85,21 @@ class QLearningPlayer:
     def __init__(self, player):
         self.player = player
         self.board_size = 8
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Load Q-network
         self.model = QNetwork();
         self.model.load_state_dict(torch.load(model_path))
+        print("Model loaded from", model_path)
         self.model.eval()  # Set model to evaluation mode
 
     def get_state_tensor(self, board, turn):
-        """
-        Chuyển bàn cờ thành tensor phù hợp để đưa vào mạng.
-        Có thể điều chỉnh encode cho phù hợp với cách huấn luyện trước đó.
-        """
-        state = np.array(board).flatten()
-        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)  # shape: (1, 64) hoặc (1, 128), v.v.
-        return state_tensor
+        if turn == 2:
+            board = np.where(board == 1, -1, board)
+            board = np.where(board == 2, 1, board)
+        else:
+            board = np.where(board == 1, 1, board)
+            board = np.where(board == 2, -1, board)
+        return torch.tensor(board, dtype=torch.float32).reshape(-1)
 
     def play(self, game):
         valid_moves = game.get_valid_moves
