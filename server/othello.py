@@ -1,5 +1,5 @@
 import utils
-
+import copy
 EMPTY = 0
 BLACK = 1
 WHITE = 2
@@ -37,6 +37,14 @@ class Game:
         self.board_y = 8
         #board_x = board_y = n = 8
 
+    def deepcopy(self):
+        """Tạo bản sao sâu của trạng thái game."""
+        new_game = Game()
+        new_game.board_state = copy.deepcopy(self.board_state)
+        new_game.turn = self.turn
+        # Sao chép các thuộc tính khác nếu có
+        return new_game
+
     @property
     def get_valid_moves(self):
         return utils.get_valid_moves(self.board_state, self.turn)
@@ -72,3 +80,6 @@ class Game:
     def getActionSize(self):
         # Return number of actions, n is the board size and +1 is for no-op action
         return self.board_x * self.board_y + 1
+    
+    def get_winner(self):
+        return utils.get_winner(self.board_state)

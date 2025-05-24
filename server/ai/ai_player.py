@@ -3,9 +3,11 @@ import utils
 import copy
 from ai import evaluator
 import numpy as np
-
-
-class AIPlayer:
+import pickle
+from collections import defaultdict
+import torch
+from network.q_learning import QNetwork, QNetworkAgent
+class MinimaxPlayer:
     def __init__(self, player):
         self.player = player
 
@@ -42,44 +44,7 @@ class AIPlayer:
             utils.make_move(temp_board, row, col, self.player)
 
             # Đánh giá trạng thái sau khi đi
-            value = evaluator.minimax(temp_board, 0, True, -1000, 1000)
-            
-            if value > bestVal:
-                bestVal = value
-                bestMove = move
-
-        return bestMove
-
-    
-class RandomPlayer():
-
-    def __init__(self, game):
-        self.game = game
-
-    def get_random_move(self, game):
-        """
-        Get a random move for the AI player. For testing.
-
-        """
-        valid_moves = game.get_valid_moves
-
-        print(evaluator.evaluate(game.board_state))
-        return random.choice(valid_moves) if valid_moves else None
-    
-    def findBestMove(self, board_state):
-        bestVal = -1001
-        bestMove = None
-        
-        for move in utils.get_valid_moves(board_state, 2):
-            # Sao chép board
-            temp_board = copy.deepcopy(board_state)
-            
-            # Áp dụng nước đi lên temp_board
-            row, col = move
-            utils.make_move(temp_board, row, col, self.player)
-
-            # Đánh giá trạng thái sau khi đi
-            value = evaluator.minimax(temp_board, 0, True, -1000, 1000)
+            value = evaluator.minimax(temp_board, 0, False, -1000, 1000)
             
             if value > bestVal:
                 bestVal = value
@@ -115,40 +80,40 @@ class RandomPlayer():
 
         return self.get_random_move(game)
     
+model_path = "models/q_network.pt"
 class QLearningPlayer:
-    def __init__(self, player, q_table_path, board_size=8):
+    def __init__(self, player):
         self.player = player
-        self.board_size = board_size
+        self.board_size = 8
 
-        # Load Q-table từ file
-        with open(q_table_path, 'rb') as f:
-            q_dict = pickle.load(f)
-            self.Q = defaultdict(lambda: defaultdict(float), q_dict)
+        # Load Q-network
+        self.model = QNetwork();
+        self.model.load_state_dict(torch.load(model_path))
+        print("Model loaded from", model_path)
+        self.model.eval()  # Set model to evaluation mode
 
-    def get_state_id(self, board, turn):
-        board = tuple(np.array(board).flatten())
-        return (board, turn)
+    def get_state_tensor(self, board, turn):
+        if turn == 2:
+            board = np.where(board == 1, -1, board)
+            board = np.where(board == 2, 1, board)
+        else:
+            board = np.where(board == 1, 1, board)
+            board = np.where(board == 2, -1, board)
+        return torch.tensor(board, dtype=torch.float32).reshape(-1)
 
     def play(self, game):
         valid_moves = game.get_valid_moves
         if not valid_moves:
-            return None  # Bắt buộc phải pass
+            return None
 
-        obs = {'board': game.board_state, 'turn': self.player}
-        state = self.get_state_id(obs['board'], obs['turn'])
-        q_values = self.Q[state]
+        board = np.array(game.board_state)
 
-        # Chuyển valid_moves -> valid_actions
-        valid_actions = [r * self.board_size + c for r, c in valid_moves]
+        state_tensor = self.get_state_tensor(board, self.player)
 
-        # Chọn action có Q-value cao nhất
-        best_action = max(valid_actions, key=lambda a: q_values[a])
+        with torch.no_grad():
+            q_values = self.model(state_tensor).cpu().numpy().flatten()
 
-        # Chuyển lại thành (row, col)
-        return best_action // self.board_size, best_action % self.board_size
-
-
-    
-
-        return self.get_random_move(game)
+        # Lọc Q-values theo hành động hợp lệ
+        best_action = max(valid_moves, key=lambda a: q_values[a[0] * 8 + a[1]])
+        return best_action
 
