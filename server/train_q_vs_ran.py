@@ -7,7 +7,7 @@ import os
 import torch
 BATCH_SIZE=32
 MODEL_PATH = "models/q_network.pt"
-
+PASS_ACTION = -9
 if __name__ == "__main__":
     metrics = TrainingMetrics()
     total_black_win = 0
@@ -42,7 +42,7 @@ if __name__ == "__main__":
                 if valid_moves:
                     action = agent_white.choose_action(state, valid_moves)
                 else:
-                    action = env.action_space.n - 1  # Pass (nếu bạn định nghĩa pass là action 64)
+                    action = PASS_ACTION  # Pass (nếu bạn định nghĩa pass là action -9)
                 next_observation, reward, terminated, truncated, info = env.step(action)
                 done = terminated or truncated
                 next_state = agent_white.encode_state(next_observation)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
                     row, col = move
                     action = row * env.board_size + col
                 else:
-                    action = env.action_space.n - 1  # Pass
+                    action = PASS_ACTION  # Pass
                 next_observation, reward, terminated, truncated, info = env.step(action)
                 done = terminated or truncated
 
