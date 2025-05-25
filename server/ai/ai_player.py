@@ -4,6 +4,7 @@ from ai import evaluator
 import numpy as np
 import torch
 from network.q_learning import QNetwork, QNetworkAgent
+import time
 
 class MinimaxPlayer:
     def __init__(self, player):
@@ -20,6 +21,7 @@ class MinimaxPlayer:
         return self.find_best_move(game.board_state)
     
     def find_best_move(self, board_state):
+        # start = time.time()
         best_val = -evaluator.INFINITY
         best_move = None
         
@@ -32,6 +34,8 @@ class MinimaxPlayer:
             if value >= best_val:
                 best_val = value
                 best_move = move
+        # end = time.time()
+        # print(f"Minimax evaluation time: {end - start:.4f} seconds")
         return best_move
     
 

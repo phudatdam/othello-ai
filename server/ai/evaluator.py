@@ -10,6 +10,8 @@ DYNAMIC_WEIGHTS = {
     'late':  { 'disc_diff': 5.0, 'corner_diff': 10, 'mobility': 1.0, 'stability': 10.0, 'positional_score': 0.5, 'frontier_discs': -0.5 }
 }
 
+transposition_table = {}
+
 def evaluate(board_state, player):
     """
     Evaluate the board state for the given player.
@@ -57,7 +59,11 @@ def minimax(board_state, depth, player, isMax, alpha, beta):
     Returns:
         score: The evaluation score for the current board state.
     """
-
+    # Use transposition table to avoid re-evaluating the same board state
+    key = (board_hash(board_state), depth, player, isMax)
+    if key in transposition_table:
+        return transposition_table[key]
+    
     # If the game is over, return the evaluation score based on the winner
     if utils.is_game_over(board_state):
         winner = utils.get_winner(board_state)
@@ -83,7 +89,7 @@ def minimax(board_state, depth, player, isMax, alpha, beta):
         # Mất lượt -> chuyển cho đối thủ nhưng giữ nguyên board
         return minimax(board_state, depth - 1, player, not isMax, alpha, beta)
 
-    #If this is MAX
+    best = 0
     if isMax:
         best = -INFINITY
         for move in valid_moves:
@@ -94,7 +100,6 @@ def minimax(board_state, depth, player, isMax, alpha, beta):
             alpha = max(alpha, best)
             if beta <= alpha:
                 break
-        return best
     else:
         best = INFINITY
         for move in valid_moves:
@@ -105,7 +110,19 @@ def minimax(board_state, depth, player, isMax, alpha, beta):
             beta = min(beta, best)
             if beta <= alpha:
                 break
-        return best
+    
+    # Save score in the transposition table
+    transposition_table[key] = best
+    return best
+
+
+def board_hash(board_state):
+    """
+    Generate a unique hash for the board state.
+    This is used for transposition table to avoid re-evaluating the same board state.
+    """
+    flat = tuple(tuple(row) for row in board_state)
+    return hash(flat)
 
 
 def get_disc_diff(board_state, player):
