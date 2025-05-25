@@ -17,11 +17,11 @@ class MinimaxPlayer:
         Returns:
             bestMove: The best move for the player in the form (row, col).
         """
-        return self.findBestMove(game.board_state)
+        return self.find_best_move(game.board_state)
     
-    def findBestMove(self, board_state):
-        bestVal = -evaluator.INFINITY
-        bestMove = None
+    def find_best_move(self, board_state):
+        best_val = -evaluator.INFINITY
+        best_move = None
         
         for move in utils.get_valid_moves(board_state, self.player):
             # Áp dụng nước đi lên temp_board
@@ -29,10 +29,10 @@ class MinimaxPlayer:
             next_board = utils.make_move(board_state, row, col, self.player)
             # Đánh giá trạng thái sau khi đi
             value = evaluator.minimax(next_board, 4, self.player, False, -evaluator.INFINITY, evaluator.INFINITY)
-            if value >= bestVal:
-                bestVal = value
-                bestMove = move
-        return bestMove
+            if value >= best_val:
+                best_val = value
+                best_move = move
+        return best_move
     
 
 class RandomPlayer():

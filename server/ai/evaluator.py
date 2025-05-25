@@ -4,6 +4,11 @@ from othello import BLACK, WHITE
 
 INFINITY = 100_000
 CORNERS = [(0,0), (0,7), (7,0), (7,7)]
+DYNAMIC_WEIGHTS = {
+    'early': { 'disc_diff': 0.5, 'corner_diff': 10, 'mobility': 2.0, 'stability': 5.0, 'positional_score': 2.0, 'frontier_discs': -1.5 },
+    'mid':   { 'disc_diff': 1.0, 'corner_diff': 10, 'mobility': 1.5, 'stability': 7.0, 'positional_score': 1.0, 'frontier_discs': -1.0 },
+    'late':  { 'disc_diff': 5.0, 'corner_diff': 10, 'mobility': 1.0, 'stability': 10.0, 'positional_score': 0.5, 'frontier_discs': -0.5 }
+}
 
 def evaluate(board_state, player):
     """
@@ -18,6 +23,9 @@ def evaluate(board_state, player):
     Returns:
         total_score: A float representing the evaluation score for the player.
     """
+    # Determine the game phase and set weights accordingly
+    weights = DYNAMIC_WEIGHTS[get_game_phase(board_state)]
+    # Calculate scores for each heuristic
     disc_diff_score = get_disc_diff(board_state, player)
     corner_diff_score = get_corner_diff(board_state, player)
     mobility_score = get_mobility(board_state, player)
@@ -26,12 +34,14 @@ def evaluate(board_state, player):
     frontier_score = get_frontier_discs(board_state, player)
 
     # Combine scores with weights (adjust on testing)
-    total_score = (disc_diff_score * 1.0 +
-                   corner_diff_score * 10.0 +
-                   mobility_score * 1.5 +
-                   stability_score * 3.0 +
-                   positional_score * 1.0 +
-                   frontier_score * -1.0)
+    total_score = (
+        weights['disc_diff'] * disc_diff_score +
+        weights['corner_diff'] * corner_diff_score +
+        weights['mobility'] * mobility_score +
+        weights['stability'] * stability_score +
+        weights['positional_score'] * positional_score +
+        weights['frontier_discs'] * frontier_score
+    )
 
     return total_score
 
@@ -61,14 +71,13 @@ def minimax(board_state, depth, player, isMax, alpha, beta):
     if depth == 0:
         return evaluate(board_state, player)
     
-     # Xác định player hiện tại
-    if not isMax:
-        player = utils.get_opponent(player)
+    # Xác định player hiện tại
+    current_player = player if isMax else utils.get_opponent(player)
     
     # Get valid moves for the current player
-    valid_moves = utils.get_valid_moves(board_state, player)
+    valid_moves = utils.get_valid_moves(board_state, current_player)
     # Sort valid moves by their evaluation score
-    valid_moves.sort(key=lambda move: evaluate(utils.make_move(board_state, move[0], move[1], player), player), reverse=isMax)
+    valid_moves.sort(key=lambda move: evaluate(utils.make_move(board_state, move[0], move[1], current_player), current_player), reverse=isMax)
 
     if not valid_moves:
         # Mất lượt -> chuyển cho đối thủ nhưng giữ nguyên board
@@ -79,7 +88,7 @@ def minimax(board_state, depth, player, isMax, alpha, beta):
         best = -INFINITY
         for move in valid_moves:
             row, col = move
-            next_board = utils.make_move(board_state, row, col, player)
+            next_board = utils.make_move(board_state, row, col, current_player)
             val = minimax(next_board, depth - 1, player, not isMax, alpha, beta)
             best = max(best, val)
             alpha = max(alpha, best)
@@ -90,7 +99,7 @@ def minimax(board_state, depth, player, isMax, alpha, beta):
         best = INFINITY
         for move in valid_moves:
             row, col = move
-            next_board = utils.make_move(board_state, row, col, player)
+            next_board = utils.make_move(board_state, row, col, current_player)
             val = minimax(next_board, depth - 1, player, not isMax, alpha, beta)
             best = min(best, val)
             beta = min(beta, best)
@@ -230,7 +239,7 @@ def get_positional_score(board_state, player):
     # If a corner is occupied, the cells adjacent to it are more valuable
     for corner in CORNERS:
         r, c = corner
-        if board_state[r][c] == player:
+        if board_state[r][c] != 0:
             # Increase the value of adjacent cells
             for dr in [-1, 0, 1]:
                 for dc in [-1, 0, 1]:
@@ -238,8 +247,8 @@ def get_positional_score(board_state, player):
                         positional_weights[r + dr][c + dc] += 50
     # Calculate the positional score
     score = 0
-    for r in range(len(board_state)):
-        for c in range(len(board_state[r])):
+    for r in range(8):
+        for c in range(8):
             if board_state[r][c] == player:
                 score += positional_weights[r][c]
             elif board_state[r][c] == utils.get_opponent(player):
@@ -274,3 +283,19 @@ def get_frontier_discs(board_state, player):
     if player_frontier + opponent_frontier == 0:
         return 0
     return (player_frontier - opponent_frontier) / (player_frontier + opponent_frontier)
+
+
+def get_game_phase(board_state):
+    """
+    Determine the game phase based on the number of discs on the board.
+    Returns:
+        'early', 'mid', or 'late' phase.
+    """
+    total_discs = utils.get_score(board_state, BLACK) + utils.get_score(board_state, WHITE)
+    
+    if total_discs < 20:
+        return 'early'
+    elif total_discs < 50:
+        return 'mid'
+    else:
+        return 'late'
