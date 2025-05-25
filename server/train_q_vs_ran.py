@@ -66,7 +66,8 @@ if __name__ == "__main__":
 
             observation = next_observation
             current_player = 3 - current_player
-            total_reward += reward
+            
+        total_reward += reward
             #env.render()
 
         # Ghi nhận kết quả trận đấu

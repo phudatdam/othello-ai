@@ -16,7 +16,7 @@ if __name__ == "__main__":
     total_black_win = 0
     total_white_win = 0
     total_draw = 0
-    num_games = 100
+    num_games = 1000
 
     agent_white = MinimaxQAgent()
     if os.path.exists(MODEL_PATH):
@@ -37,6 +37,7 @@ if __name__ == "__main__":
         # Biến tạm lưu trạng thái và action của White
         white_state = None
         white_action = None
+        total_reward = 0
 
         while not done:
             if current_player == WHITE:
@@ -93,9 +94,11 @@ if __name__ == "__main__":
                     white_state = None  # Reset
 
                 # Cập nhật trạng thái
+                total_reward += reward
                 current_player = 3 - current_player
                 observation = next_observation
-
+        # === KẾT THÚC MỘT GAME ===
+        
         # Xử lý kết quả
         winner = env.game.get_winner()
         if winner == WHITE:
@@ -111,12 +114,17 @@ if __name__ == "__main__":
             win_rate=total_white_win/(game_index+1),
             loss=agent_white.current_loss,
             epsilon=agent_white.epsilon,
-            reward=0
+            reward=total_reward
         )
 
         # Train định kỳ
         if len(agent_white.memory) > 32:
             agent_white.replay(32)
+
+        # Vẽ biểu đồ mỗi 50 game
+        if game_index % 50 == 0 and game_index > 0:
+            metrics.plot()
+            print(f"Đã lưu biểu đồ tại training_metrics_{game_index}.png")
 
     # Lưu model và hiển thị kết quả
     torch.save(agent_white.model.state_dict(), MODEL_PATH)

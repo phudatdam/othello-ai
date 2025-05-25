@@ -25,7 +25,7 @@ class TrainingMetrics:
         plt.subplot(2, 2, 1)
         plt.plot(self.win_rates, label='Tỷ lệ thắng thực tế')
         plt.plot(moving_avg(self.win_rates), 
-                label=f'Trung bình {self.moving_avg_window} game', 
+                label=f'Trung bình {self.moving_avg_window} game gần nhất', 
                 color='red', linewidth=2)
         plt.title('TỶ LỆ THẮNG CỦA AGENT')
         plt.xlabel('Số game')

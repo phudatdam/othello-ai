@@ -37,7 +37,7 @@ class MinimaxQAgent:
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
         self.gamma = 0.99
         self.epsilon = 1.0
-        self.epsilon_min = 0.01
+        self.epsilon_min = 0
         self.epsilon_decay = 0.995
         self.current_loss = 0.0
         self.losses = []
@@ -134,15 +134,12 @@ class MinimaxQAgent:
                 # Tính V[next_state] = max_a' min_o' Q(next_state, a', o')
                 # Chuyển next_state_tensor thành board 8x8 và turn
                 board_arr = next_state_tensor.detach().cpu().numpy().reshape(8, 8)
-                turn = None  # Nếu cần, bạn phải truyền turn đúng từ buffer
                 # Nếu bạn lưu turn trong buffer, hãy lấy ra ở đây. Nếu không, mặc định là WHITE hoặc BLACK
                 # Ví dụ: turn = next_state['turn'] nếu bạn lưu dict
                 temp_game = Game()
                 temp_game.board_state = board_arr.tolist()
-                if turn is not None:
-                    temp_game.turn = turn
+                temp_game.turn = WHITE #Chỉnh lại nếu cần thiết
                 valid_agent_moves = temp_game.get_valid_moves
-
                 max_min_q = -float('inf')
                 for a_prime in valid_agent_moves:
                     temp_game_copy = Game()
@@ -170,11 +167,13 @@ class MinimaxQAgent:
 
             pred = self.model(input_tensor)
             loss = self.criterion(pred, target)
+            self.current_loss = loss.item()
+            print(f"Current Loss: {self.current_loss}")
+            self.losses.append(self.current_loss)
             self.optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
             self.optimizer.step()
-            losses.append(loss.item())
 
             self.train_step += 1
             if self.train_step % self.update_target_steps == 0:
