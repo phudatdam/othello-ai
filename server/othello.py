@@ -1,8 +1,8 @@
 import utils
 import copy
 EMPTY = 0
-BLACK = 1
-WHITE = 2
+BLACK = 2
+WHITE = 1
 
 
 class Game:

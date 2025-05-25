@@ -18,10 +18,10 @@ class MinimaxQNetwork(nn.Module):
 
         layers = []
         layers.append(nn.Linear(input_dim, hidden_dim))
-        layers.append(nn.ReLU())
+        layers.append(nn.Sigmoid())
         for _ in range(num_layers - 2):
             layers.append(nn.Linear(hidden_dim, hidden_dim))
-            layers.append(nn.ReLU())
+            layers.append(nn.Sigmoid())
         layers.append(nn.Linear(hidden_dim, output_dim))
         self.model = nn.Sequential(*layers)
 
@@ -134,12 +134,17 @@ class MinimaxQAgent:
                 # Tính V[next_state] = max_a' min_o' Q(next_state, a', o')
                 # Chuyển next_state_tensor thành board 8x8 và turn
                 board_arr = next_state_tensor.detach().cpu().numpy().reshape(8, 8)
-                # Nếu bạn lưu turn trong buffer, hãy lấy ra ở đây. Nếu không, mặc định là WHITE hoặc BLACK
-                # Ví dụ: turn = next_state['turn'] nếu bạn lưu dict
+
+                # Chuyển board_arr sang định dạng Game
+                converted_board = np.where(board_arr == -1, 2, board_arr)  # -1 -> 2
+                converted_board = np.where(converted_board == 1, 1, converted_board)  # 1 -> 1
+
                 temp_game = Game()
-                temp_game.board_state = board_arr.tolist()
-                temp_game.turn = WHITE #Chỉnh lại nếu cần thiết
+                temp_game.board_state = converted_board.astype(int).tolist()
+
+                temp_game.turn = WHITE  # hoặc lấy từ next_state nếu có
                 valid_agent_moves = temp_game.get_valid_moves
+
                 max_min_q = -float('inf')
                 for a_prime in valid_agent_moves:
                     temp_game_copy = Game()
@@ -153,6 +158,7 @@ class MinimaxQAgent:
                     else:
                         min_q = float('inf')
                         for o_prime in valid_opponent_moves:
+                            
                             next_input = torch.cat([
                                 next_state_tensor,
                                 torch.tensor([a_prime[0], a_prime[1], o_prime[0], o_prime[1]], dtype=torch.float32)
@@ -167,8 +173,8 @@ class MinimaxQAgent:
 
             pred = self.model(input_tensor)
             loss = self.criterion(pred, target)
+            print(pred, target)
             self.current_loss = loss.item()
-            print(f"Current Loss: {self.current_loss}")
             self.losses.append(self.current_loss)
             self.optimizer.zero_grad()
             loss.backward()
