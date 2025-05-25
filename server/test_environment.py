@@ -42,9 +42,17 @@ class OthelloEnv(gym.Env):
 
     # thực hiện hành động, cập nhật trạng thái trò chơi, trả về thông tin phần thưởng
     def step(self, action):
+        # Nếu action là -9: pass turn (bị mất lượt)
+        if action == -9:
+            self.game.turn = 3 - self.game.turn  # Đổi lượt cho người chơi tiếp theo
+            terminated = self.game.is_game_over
+            reward = self._get_reward()
+            truncated = False
+            observation = self._get_obs()
+            info = {}
+            return observation, reward, terminated, truncated, info
 
         #action = 8*row+col
-
         row = action // self.board_size
         col = action % self.board_size
         player = self.game.turn

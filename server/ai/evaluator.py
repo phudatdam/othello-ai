@@ -8,7 +8,6 @@ import pandas as pd
 import copy
 import utils
 import numpy as np
-from data_extractor import extract_features
 from othello import BLACK, WHITE
 
 CORNERS = [(0,0), (0,7), (7,0), (7,7)]

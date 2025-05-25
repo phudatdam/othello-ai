@@ -94,7 +94,6 @@ class QNetworkAgent:
         loss = self.criterion(state_action_values, expected_state_action_values)
         self.current_loss = loss.item()
         self.losses.append(self.current_loss)
-
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
