@@ -15,7 +15,9 @@ class MinimaxQNetwork(nn.Module):
     def __init__(self, input_dim=68, output_dim=1, hidden_dim=256, num_layers=3, learning_rate=0.001):
         super(MinimaxQNetwork, self).__init__()
         self.learning_rate = learning_rate
-
+        '''
+        dùng mạng MLP 3 layer 
+        '''
         layers = []
         layers.append(nn.Linear(input_dim, hidden_dim))
         layers.append(nn.ReLU())
@@ -36,7 +38,7 @@ class MinimaxQAgent:
         self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
         self.gamma = 0.99
-        self.epsilon = 1.0
+        self.epsilon = 1.0 # không chắc như này ko khác j đi random
         self.epsilon_min = 0
         self.epsilon_decay = 0.995
         self.current_loss = 0.0
