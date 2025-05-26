@@ -65,7 +65,7 @@ class Game:
             raise ValueError("Invalid move.")
         # Game logic here
         self.board_state = utils.make_move(self.board_state, row, col, player)
-        opponent = 3 - player
+        opponent = utils.get_opponent(player)
         if utils.get_valid_moves(self.board_state, opponent):
             self.turn = opponent
         else: 
