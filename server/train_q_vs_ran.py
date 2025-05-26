@@ -14,7 +14,7 @@ if __name__ == "__main__":
     total_white_win = 0
     total_draw = 0
 
-    num_games = 1000
+    num_games = 300
 
     # Tải model đã huấn luyện
     agent_white = QNetworkAgent()
