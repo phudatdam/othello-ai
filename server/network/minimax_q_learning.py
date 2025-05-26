@@ -18,11 +18,11 @@ class MinimaxQNetwork(nn.Module):
 
         layers = []
         layers.append(nn.Linear(input_dim, hidden_dim))
-        layers.append(nn.Sigmoid())
         for _ in range(num_layers - 2):
             layers.append(nn.Linear(hidden_dim, hidden_dim))
-            layers.append(nn.Sigmoid())
+            layers.append(nn.ReLU())
         layers.append(nn.Linear(hidden_dim, output_dim))
+        layers.append(nn.Softmax(dim=-1))  # Phân phối xác suất các hành động
         self.model = nn.Sequential(*layers)
 
     def forward(self, x):
@@ -34,7 +34,7 @@ class MinimaxQAgent:
         self.target_model = MinimaxQNetwork()
         self.target_model.load_state_dict(self.model.state_dict())
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001)
         self.gamma = 0.99
         self.epsilon = 1.0
         self.epsilon_min = 0
@@ -44,7 +44,7 @@ class MinimaxQAgent:
         self.memory = deque(maxlen=15000)
         self.update_target_steps = 1000
         self.train_step = 0
-        self.max_grad_norm = 1.0
+        self.max_grad_norm = 0.1
 
     def encode_state(self, obs):
         board = obs['board'].reshape(-1)
@@ -64,8 +64,8 @@ class MinimaxQAgent:
 
         self.model.eval()
         state_tensor = self.encode_state(obs)
-        best_action = (-1, -1)  # Khởi tạo action không hợp lệ
-        best_value = -float('inf')
+        best_action = (-1, -1) # Khởi tạo action không hợp lệ
+        best_value = -10.0
 
         # Tạo bản sao game từ observation
         current_board = np.array(obs['board']).reshape(8, 8).tolist()
@@ -89,7 +89,7 @@ class MinimaxQAgent:
                 return a  # Đối thủ không có nước đi
 
             # Tính min Q-value cho từng phản ứng của đối thủ
-            min_q = float('inf')
+            min_q = 10.0
             for o in valid_opponent_moves:
                 # Tạo input tensor: state + (a, o)
                 input_tensor = torch.cat([
@@ -119,6 +119,10 @@ class MinimaxQAgent:
         minibatch = random.sample(self.memory, batch_size)
         losses = []
 
+        #for name, param in self.model.named_parameters():
+        #        print(f"{name} - Weight:\n{param.data}")
+        #        print(f"{name} - Grad:\n{param.grad}")
+
         for state, action, opponent_action, reward, next_state, done in minibatch:
             state_tensor = state
             next_state_tensor = next_state
@@ -136,8 +140,8 @@ class MinimaxQAgent:
                 board_arr = next_state_tensor.detach().cpu().numpy().reshape(8, 8)
 
                 # Chuyển board_arr sang định dạng Game
-                converted_board = np.where(board_arr == -1, 2, board_arr)  # -1 -> 2
-                converted_board = np.where(converted_board == 1, 1, converted_board)  # 1 -> 1
+                converted_board = np.where(board_arr == 1, 2, board_arr)  # 1 -> 2
+                converted_board = np.where(converted_board == -1, 1, converted_board)  # -1 -> 1
 
                 temp_game = Game()
                 temp_game.board_state = converted_board.astype(int).tolist()
@@ -145,7 +149,7 @@ class MinimaxQAgent:
                 temp_game.turn = WHITE  # hoặc lấy từ next_state nếu có
                 valid_agent_moves = temp_game.get_valid_moves
 
-                max_min_q = -float('inf')
+                max_min_q = -10.0
                 for a_prime in valid_agent_moves:
                     temp_game_copy = Game()
                     temp_game_copy.board_state = copy.deepcopy(temp_game.board_state)
@@ -156,7 +160,7 @@ class MinimaxQAgent:
                     if not valid_opponent_moves:
                         min_q = 0.0
                     else:
-                        min_q = float('inf')
+                        min_q = 10.0
                         for o_prime in valid_opponent_moves:
                             
                             next_input = torch.cat([
@@ -171,9 +175,10 @@ class MinimaxQAgent:
 
                 target = torch.tensor([[reward + self.gamma * max_min_q]], dtype=torch.float32)
 
+            #print(f"target: min={target.min().item()}, max={target.max().item()}, mean={target.mean().item()}")
             pred = self.model(input_tensor)
             loss = self.criterion(pred, target)
-            print(pred, target)
+            #print("Loss:", loss.item())
             self.current_loss = loss.item()
             self.losses.append(self.current_loss)
             self.optimizer.zero_grad()
@@ -184,9 +189,6 @@ class MinimaxQAgent:
             self.train_step += 1
             if self.train_step % self.update_target_steps == 0:
                 self.target_model.load_state_dict(self.model.state_dict())
-
-        self.current_loss = np.mean(losses)
-        self.losses.append(self.current_loss)
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
