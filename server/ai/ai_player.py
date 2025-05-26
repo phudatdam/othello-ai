@@ -21,7 +21,7 @@ class MinimaxPlayer:
         return self.find_best_move(game.board_state)
     
     def find_best_move(self, board_state):
-        # start = time.time()
+        start = time.time()
         best_val = -evaluator.INFINITY
         best_move = None
         
@@ -30,12 +30,13 @@ class MinimaxPlayer:
             row, col = move
             next_board = utils.make_move(board_state, row, col, self.player)
             # Đánh giá trạng thái sau khi đi
-            value = evaluator.minimax(next_board, 4, self.player, False, -evaluator.INFINITY, evaluator.INFINITY)
+            depth = evaluator.get_search_depth(board_state)
+            value = evaluator.minimax(next_board, depth, self.player, False, -evaluator.INFINITY, evaluator.INFINITY)
             if value >= best_val:
                 best_val = value
                 best_move = move
-        # end = time.time()
-        # print(f"Minimax evaluation time: {end - start:.4f} seconds")
+        end = time.time()
+        print(f"Minimax evaluation time: {end - start:.4f} seconds")
         return best_move
     
 

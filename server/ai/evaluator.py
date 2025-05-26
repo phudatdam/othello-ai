@@ -316,3 +316,15 @@ def get_game_phase(board_state):
         return 'mid'
     else:
         return 'late'
+
+
+def get_search_depth(board_state):
+    total_discs = utils.get_score(board_state, BLACK) + utils.get_score(board_state, WHITE)
+    if total_discs < 10:
+        return 4
+    elif total_discs < 40:
+        return 3
+    elif total_discs < 55:
+        return 4
+    else:
+        return 5
