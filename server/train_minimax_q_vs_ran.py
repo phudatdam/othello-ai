@@ -21,7 +21,7 @@ if __name__ == "__main__":
     agent_white = MinimaxQAgent()
     if os.path.exists(MODEL_PATH):
         agent_white.model.load_state_dict(torch.load(MODEL_PATH))
-        agent_white.model.eval()
+        agent_white.model.eval()  # Đặt model về chế độ đánh giá
         print("✅ Model loaded from", MODEL_PATH)
     else:
         print("⚠️ No saved model found, training from scratch.")
@@ -80,14 +80,14 @@ if __name__ == "__main__":
                     next_state = agent_white.encode_state(next_observation)
                     
                     # Tính reward tổng hợp cho cả 2 lượt
-                    total_reward = reward if current_player == WHITE else -reward
+                    temp_reward = reward if current_player == WHITE else -reward
                     
                     # Lưu vào buffer
                     agent_white.replay_buffer_save(
                         state=white_state,
                         action=white_action,
                         opponent_action=(row, col),
-                        reward=total_reward,
+                        reward=temp_reward,
                         next_state=next_state,
                         done=done
                     )

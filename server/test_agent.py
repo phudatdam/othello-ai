@@ -1,6 +1,6 @@
 from test_environment import OthelloEnv  # Môi trường Othello
 from othello import BLACK, WHITE
-from ai.ai_player import QLearningPlayer, RandomPlayer, MinimaxPlayer  # Player của bạn
+from ai.ai_player import QLearningPlayer, RandomPlayer, MinimaxPlayer, MinimaxQLearningPlayer  # Player của bạn
 
 def test_agent(num_games, agent1, agent2):
     """
@@ -127,11 +127,12 @@ def test_agent(num_games, agent1, agent2):
 
 if __name__ == "__main__":
     # Example Usage:
-    num_games_to_play = 100
+    num_games_to_play = 1000
 
     # Make sure to replace these with actual instances of your player classes
     # For demonstration, let's use RandomPlayer and another RandomPlayer
     # You would replace these with your trained QLearningPlayer, MiniMax_Player, etc.
+
     agent_a = MinimaxPlayer(BLACK) # Example: Assuming AIPlayer can be initialized without a color initially
     agent_b = RandomPlayer(WHITE) # Example: Assuming AIPlayer can be initialized without a color initially
 
