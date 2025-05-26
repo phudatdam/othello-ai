@@ -1,57 +1,44 @@
 import random
 import utils
-import copy
 from ai import evaluator
 import numpy as np
-import pickle
-from collections import defaultdict
 import torch
 from network.q_learning import QNetwork, QNetworkAgent
+import time
+
 class MinimaxPlayer:
     def __init__(self, player):
         self.player = player
 
     def play(self, game):
         """
-        Get the AI bot's move.
-        
-        TODO: Implement AI algorithms (minimax search)
-
+        Play a move using the Minimax algorithm with alpha-beta pruning.
+        Args:
+            game: The current game state.
+        Returns:
+            bestMove: The best move for the player in the form (row, col).
         """
-        return self.findBestMove(game.board_state)
-
+        return self.find_best_move(game.board_state)
     
-    def get_random_move(self, game):
-        """
-        Get a random move for the AI player. For testing.
-
-        """
-        valid_moves = game.get_valid_moves
-        print(evaluator.evaluate(game.board_state))
-        return random.choice(valid_moves) if valid_moves else None
-
-    
-    def findBestMove(self, board_state):
-        bestVal = -1001
-        bestMove = None
+    def find_best_move(self, board_state):
+        # start = time.time()
+        best_val = -evaluator.INFINITY
+        best_move = None
         
-        for move in utils.get_valid_moves(board_state, 2):
-            # Sao chép board
-            temp_board = copy.deepcopy(board_state)
-            
+        for move in utils.get_valid_moves(board_state, self.player):
             # Áp dụng nước đi lên temp_board
             row, col = move
-            utils.make_move(temp_board, row, col, self.player)
-
+            next_board = utils.make_move(board_state, row, col, self.player)
             # Đánh giá trạng thái sau khi đi
-            value = evaluator.minimax(temp_board, 0, False, -1000, 1000)
-            
-            if value > bestVal:
-                bestVal = value
-                bestMove = move
-
-        return bestMove
+            value = evaluator.minimax(next_board, 4, self.player, False, -evaluator.INFINITY, evaluator.INFINITY)
+            if value >= best_val:
+                best_val = value
+                best_move = move
+        # end = time.time()
+        # print(f"Minimax evaluation time: {end - start:.4f} seconds")
+        return best_move
     
+
 class RandomPlayer():
 
     def __init__(self, game):
@@ -80,6 +67,7 @@ class RandomPlayer():
 
         return self.get_random_move(game)
     
+
 model_path = "models/q_network.pt"
 class QLearningPlayer:
     def __init__(self, player):
