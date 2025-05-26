@@ -2,15 +2,12 @@ import utils
 import numpy as np
 from othello import BLACK, WHITE
 
-INFINITY = 100_000
 CORNERS = [(0,0), (0,7), (7,0), (7,7)]
 DYNAMIC_WEIGHTS = {
     'early': { 'disc_diff': 0.5, 'corner_diff': 10, 'mobility': 2.0, 'stability': 5.0, 'positional_score': 2.0, 'frontier_discs': -1.5 },
     'mid':   { 'disc_diff': 1.0, 'corner_diff': 10, 'mobility': 1.5, 'stability': 7.0, 'positional_score': 1.0, 'frontier_discs': -1.0 },
     'late':  { 'disc_diff': 5.0, 'corner_diff': 10, 'mobility': 1.0, 'stability': 10.0, 'positional_score': 0.5, 'frontier_discs': -0.5 }
 }
-
-transposition_table = {}
 
 def evaluate(board_state, player):
     """
@@ -46,83 +43,6 @@ def evaluate(board_state, player):
     )
 
     return total_score
-
-def minimax(board_state, depth, player, isMax, alpha, beta):
-    """
-    Minimax algorithm with alpha-beta pruning to evaluate the best move.
-    Args:
-        board_state: Current state of the board.
-        depth: Depth of the search tree.
-        isMax: True if it's the maximizing player's turn, False otherwise.
-        alpha: Alpha value for pruning.
-        beta: Beta value for pruning.
-    Returns:
-        score: The evaluation score for the current board state.
-    """
-    # Use transposition table to avoid re-evaluating the same board state
-    key = (board_hash(board_state), depth, player, isMax)
-    if key in transposition_table:
-        return transposition_table[key]
-    
-    # If the game is over, return the evaluation score based on the winner
-    if utils.is_game_over(board_state):
-        winner = utils.get_winner(board_state)
-        if winner == player:
-            return INFINITY
-        if winner == utils.get_opponent(player):
-            return -INFINITY
-        return 0
-    
-    # When reached the maximum depth, return the evaluation score
-    if depth == 0:
-        return evaluate(board_state, player)
-    
-    # Xác định player hiện tại
-    current_player = player if isMax else utils.get_opponent(player)
-    
-    # Get valid moves for the current player
-    valid_moves = utils.get_valid_moves(board_state, current_player)
-    # Sort valid moves by their evaluation score
-    valid_moves.sort(key=lambda move: evaluate(utils.make_move(board_state, move[0], move[1], current_player), current_player), reverse=isMax)
-
-    if not valid_moves:
-        # Mất lượt -> chuyển cho đối thủ nhưng giữ nguyên board
-        return minimax(board_state, depth - 1, player, not isMax, alpha, beta)
-
-    best = 0
-    if isMax:
-        best = -INFINITY
-        for move in valid_moves:
-            row, col = move
-            next_board = utils.make_move(board_state, row, col, current_player)
-            val = minimax(next_board, depth - 1, player, not isMax, alpha, beta)
-            best = max(best, val)
-            alpha = max(alpha, best)
-            if beta <= alpha:
-                break
-    else:
-        best = INFINITY
-        for move in valid_moves:
-            row, col = move
-            next_board = utils.make_move(board_state, row, col, current_player)
-            val = minimax(next_board, depth - 1, player, not isMax, alpha, beta)
-            best = min(best, val)
-            beta = min(beta, best)
-            if beta <= alpha:
-                break
-    
-    # Save score in the transposition table
-    transposition_table[key] = best
-    return best
-
-
-def board_hash(board_state):
-    """
-    Generate a unique hash for the board state.
-    This is used for transposition table to avoid re-evaluating the same board state.
-    """
-    flat = tuple(tuple(row) for row in board_state)
-    return hash(flat)
 
 
 def get_disc_diff(board_state, player):
@@ -312,19 +232,6 @@ def get_game_phase(board_state):
     
     if total_discs < 20:
         return 'early'
-    elif total_discs < 50:
+    if total_discs < 50:
         return 'mid'
-    else:
-        return 'late'
-
-
-def get_search_depth(board_state):
-    total_discs = utils.get_score(board_state, BLACK) + utils.get_score(board_state, WHITE)
-    if total_discs < 10:
-        return 4
-    elif total_discs < 40:
-        return 3
-    elif total_discs < 55:
-        return 4
-    else:
-        return 5
+    return 'late'
