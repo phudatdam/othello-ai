@@ -1,80 +1,147 @@
-'''
-import arena
-import othello
-
-from ai.ai_player import AIPlayer, RandomPlayer
-
-game = othello.Game()
-
-player1 = AIPlayer(game).play
-player2 = RandomPlayer(game).play
-
-# Define number of games
-num_games = 20
-
-# Start the competition
-#set_seed(seed=SEED)
-#arena = arena.Arena(player1, player2, game, display=None)  # To see the steps of the competition set "display=OthelloGame.display"
-
-arena = arena.Arena(player1)  # To see the steps of the competition set "display=OthelloGame.display"
-arena.game = game
-result = arena.playGames(num_games, verbose=False)  # returns (Number of player1 wins, number of player2 wins, number of ties)
-
-# Compute win rate for the random player (player 1)
-print(f"\nNumber of games won by player1 = {result[0]}, "
-      f"Number of games won by player2 = {result[1]} out of {num_games} games")
-win_rate_player1 = result[0]/num_games
-print(f"\nWin rate for player1 over 20 games: {round(win_rate_player1*100, 1)}%")
-
-'''
-from test_enviroment import OthelloEnv  # Import môi trường Othello của bạn
+from test_environment import OthelloEnv  # Môi trường Othello
 from othello import BLACK, WHITE
-from ai.ai_player import AIPlayer, RandomPlayer # Import các Player của bạn
+from ai.ai_player import QLearningPlayer, RandomPlayer, MinimaxPlayer, MinimaxQLearningPlayer,MCTSPlayer  # Player của bạn
+
+def test_agent(num_games, agent1, agent2):
+    """
+    Runs a series of Othello games between two agents and returns the results.
+
+    Args:
+        num_games (int): The number of games to play.
+        agent1 (AIPlayer): The first agent.
+        agent2 (AIPlayer): The second agent.
+
+    Returns:
+        dict: A dictionary containing the total wins for each agent and the total draws.
+              The keys will be the string representation of the agent objects (e.g., "QLearningPlayer(BLACK)")
+              and "draws".
+    """
+    results = {
+        str(agent1): 0,
+        str(agent2): 0,
+        "draws": 0
+    }
+
+    # Assign colors to agents for clarity in results
+    agent1_color = None
+    agent2_color = None
+
+    for game_index in range(num_games):
+        print(f"\n--- Game {game_index + 1} ---")
+
+        env = OthelloEnv()
+
+        # Randomly assign black and white for fairness, or based on agent properties if they have a preferred color
+        # Here, we'll alternate who goes first or assign based on which agent is passed as argument order
+        # For simplicity, let's say agent1 is BLACK and agent2 is WHITE in odd games, and vice-versa in even games.
+        """"""
+        if game_index % 1 == 0:
+            black_player = agent1
+            white_player = agent2
+            agent1.player = BLACK
+            agent2.player = WHITE
+            agent1_color = BLACK
+            agent2_color = WHITE
+            print(f"{str(agent1)} is BLACK, {str(agent2)} is WHITE")
+        else:
+            black_player = agent2
+            white_player = agent1
+            agent1.player = WHITE
+            agent2.player = BLACK
+            agent1_color = WHITE
+            agent2_color = BLACK
+            print(f"{str(agent2)} is BLACK, {str(agent1)} is WHITE")
+
+
+        observation, info = env.reset()
+        done = False
+        current_player_color = BLACK
+
+        while not done:
+            if current_player_color == WHITE:
+                current_agent = white_player
+            else:
+                current_agent = black_player
+
+            action = current_agent.play(env.game)
+
+            # Convert action (row, col) to action index
+            if action is not None:
+                row, col = action
+                action_gym = row * env.board_size + col
+            else:
+                # If no valid moves, choose the last action (handle pass)
+                action_gym = env.action_space.n - 1
+                print(f"Player {current_player_color} passes.")
+
+            next_observation, reward, terminated, truncated, info = env.step(action_gym)
+            done = terminated or truncated
+            observation = next_observation
+            current_player_color = 3 - current_player_color  # Switch player
+            env.render() # Uncomment to visualize each step
+
+        print("Game Over!")
+        # Determine winner based on the final reward from the perspective of the last player
+        # The reward is typically > 0 for a win, < 0 for a loss, and 0 for a draw for the player whose turn just ended.
+        # However, the environment's reward at termination might be from the perspective of WHITE.
+        # Let's check the final scores to be certain.
+        # final_scores = env.game.get_scores()
+        # print(f"Final Scores: BLACK = {final_scores[BLACK]}, WHITE = {final_scores[WHITE]}")
+
+        # if final_scores[BLACK] > final_scores[WHITE]:
+        #     print("BLACK wins!")
+        #     if agent1_color == BLACK:
+        #         results[str(agent1)] += 1
+        #     else:
+        #         results[str(agent2)] += 1
+        # elif final_scores[WHITE] > final_scores[BLACK]:
+        #     print("WHITE wins!")
+        #     if agent1_color == WHITE:
+        #         results[str(agent1)] += 1
+        #     else:
+        #         results[str(agent2)] += 1
+        # else:
+        #     print("It's a draw!")
+        #     results["draws"] += 1
+
+        winner = env.game.winner
+        if winner == BLACK:
+            print("BLACK wins!")
+            if agent1_color == BLACK:
+                results[str(agent1)] += 1
+            else:
+                results[str(agent2)] += 1
+        elif winner == WHITE:
+            print("WHITE wins!")
+            if agent1_color == WHITE:
+                results[str(agent1)] += 1
+            else:
+                results[str(agent2)] += 1
+        else:
+            print("It's a draw!")
+            results["draws"] += 1
+
+        env.close()
+
+    return results
 
 if __name__ == "__main__":
-    env = OthelloEnv()
-    # Tạo các agent
-    ai_agent_black = AIPlayer(BLACK)
-    random_agent_white = RandomPlayer(env.game)  # Cần truyền game vào RandomPlayer
+    # Example Usage:
+    num_games_to_play = 100
 
-    #tạo vòng lặp 20 game để đánh giá thuật toán nào oke hơn
-    # cho đoạn code dưới vào loop 20 
-    #lười làm
+    # Make sure to replace these with actual instances of your player classes
+    # For demonstration, let's use RandomPlayer and another RandomPlayer
+    # You would replace these with your trained QLearningPlayer, MiniMax_Player, etc.
 
-    observation, info = env.reset()
-    done = False
-    current_player = BLACK
+    agent_a = QLearningPlayer(BLACK) # Example: Assuming AIPlayer can be initialized without a color initially
+    agent_b = MinimaxPlayer(WHITE) # Example: Assuming AIPlayer can be initialized without a color initially
 
-    while not done:
-        if current_player == BLACK:
-            action = ai_agent_black.play(env.game)
-        else:
-            action = random_agent_white.play(env.game)
+    print(f"\n=== Starting {num_games_to_play} games between {str(agent_a)} and {str(agent_b)} ===")
+    game_results = test_agent(num_games_to_play, agent_a, agent_b)
 
-        # Chuyển đổi định dạng nước đi của AIPlayer sang action_space của env
-        if action is not None:
-            row, col = action
-            action_gym = row * env.board_size + col
-        else:
-            # Xử lý trường hợp không có nước đi hợp lệ (pass)
-            action_gym = env.action_space.n - 1  # Giả định hành động cuối cùng là "pass" (nếu bạn xử lý pass)
-            # Trong Othello, không có hành động "pass" rõ ràng, bạn có thể cần điều chỉnh logic này
-            # để phù hợp với cách bạn xử lý "pass" trong code của mình.
-            # Ví dụ: nếu không có nước đi hợp lệ, agent trước vẫn phải gọi env.step() với một action bất kì
-            # và env.step() sẽ tự xử lý việc không có nước đi hợp lệ.
-
-        next_observation, reward, terminated, truncated, info = env.step(action_gym)
-        done = terminated or truncated
-        observation = next_observation
-        current_player = 3 - current_player  # Chuyển đổi giữa BLACK (1) và WHITE (2)
-        env.render()
-
-    print("Game Over!")
-    if reward > 0:
-        print("BLACK wins!")
-    elif reward < 0:
-        print("WHITE wins!")
-    else:
-        print("It's a draw!")
-
-    env.close()
+    # Print final results
+    print(f"\n=== KẾT QUẢ SAU {num_games_to_play} GAME ===")
+    for agent_name, wins in game_results.items():
+        if agent_name != "draws":
+            print(f"{agent_name} thắng: {wins}")
+    print(f"Hòa: {game_results['draws']}")

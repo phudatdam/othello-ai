@@ -3,6 +3,14 @@ from gymnasium import spaces
 import numpy as np
 from othello import Game, BLACK, WHITE  # Import lớp Game của bạn
 
+
+"""
+reset: bắt đầu 1 trò chơi mới
+_get_obs: trả về trạng thái
+get_reward: phần thưởng
+render: hiển thị bàn cờ
+"""
+
 class OthelloEnv(gym.Env):
     metadata = {'render_modes': ['human', 'rgb_array'], 'render_fps': 4}
 
@@ -34,6 +42,17 @@ class OthelloEnv(gym.Env):
 
     # thực hiện hành động, cập nhật trạng thái trò chơi, trả về thông tin phần thưởng
     def step(self, action):
+        # Nếu action là -9: pass turn (bị mất lượt)
+        if action == -9:
+            self.game.turn = 3 - self.game.turn  # Đổi lượt cho người chơi tiếp theo
+            terminated = self.game.is_game_over
+            reward = self._get_reward()
+            truncated = False
+            observation = self._get_obs()
+            info = {}
+            return observation, reward, terminated, truncated, info
+
+        #action = 8*row+col
         row = action // self.board_size
         col = action % self.board_size
         player = self.game.turn
@@ -61,9 +80,9 @@ class OthelloEnv(gym.Env):
     def _get_reward(self):
         if self.game.is_game_over:
             if self.game.winner == BLACK:
-                return 100
+                return -1
             elif self.game.winner == WHITE:
-                return -100
+                return 1
             else:
                 return 0  # Hòa
         return 0
