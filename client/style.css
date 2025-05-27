@@ -1,4 +1,9 @@
 /* General layout */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 body {
     display: flex;
@@ -79,18 +84,30 @@ body {
     border: 2px solid green;
 }
 
+.opponent-move {
+    background-color: lightpink;
+    border: 2px solid red;
+}
+
 .cell:has(.valid-move) {
     cursor: pointer;
 }
 
 .scoreboard {
+    width: 400px;
     font-family: "Helvetica Neue", sans-serif;
+    margin-bottom: 20px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
     font-size: 20px;
-    margin-bottom: 10px;
+    border: 1px solid black;
     text-align: center;
-    font-weight: bold;
     color: #333;
-  }
-  .scoreboard span {
-    margin: 0 15px;
-  }
+}
+
+.scoreboard span {
+    margin: 0 30px;
+    font-size: 2rem;
+}

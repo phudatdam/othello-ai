@@ -36,15 +36,14 @@ function receiveMessages(board, websocket) {
                 console.log("Join link:", "?join=" + event.join);
                 console.log("Watch link:", "?watch=" + event.watch);
                 // Highlight valid moves.
-                displayValidMoves(board, event.validMoves);
+                displayValidMoves(board, event.validMoves, BLACK);
                 break;
             case "play":
                 // Update the board.
                 renderBoard(board, event.boardState);
                 // Highlight valid moves.
-                displayValidMoves(board, event.validMoves);
+                displayValidMoves(board, event.validMoves, event.turn);
                 // Update players' scores and turn.
-                console.log("Lượt hiện tại (event.turn):", event.turn);
                 updateStatus(event.boardState, event.turn);
                 break;
             case "win":
