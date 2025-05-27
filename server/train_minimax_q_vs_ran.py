@@ -2,7 +2,7 @@ import os
 import torch
 import numpy as np
 from test_environment import OthelloEnv
-from ai.ai_player import RandomPlayer
+from ai.ai_player import RandomPlayer, MinimaxPlayer
 from network.minimax_q_learning import MinimaxQAgent
 from network.metrics import TrainingMetrics
 import utils
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     total_black_win = 0
     total_white_win = 0
     total_draw = 0
-    num_games = 1000
+    num_games = 100
 
     agent_white = MinimaxQAgent()
     if os.path.exists(MODEL_PATH):
@@ -28,8 +28,9 @@ if __name__ == "__main__":
         print("⚠️ No saved model found, training from scratch.")
 
     for game_index in range(num_games):
+        print(f"\n=== GAME {game_index + 1} ===")
         env = OthelloEnv()
-        random_agent_black = RandomPlayer(env.game)
+        random_agent_black = MinimaxPlayer(env.game)
 
         observation, info = env.reset()
         #print("Trạng thái ban đầu:", env.game.turn)

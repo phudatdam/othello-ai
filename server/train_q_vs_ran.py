@@ -14,7 +14,7 @@ if __name__ == "__main__":
     total_white_win = 0
     total_draw = 0
 
-    num_games = 300
+    num_games = 100
 
     # Tải model đã huấn luyện
     agent_white = QNetworkAgent()
@@ -26,8 +26,9 @@ if __name__ == "__main__":
         print("⚠️ No saved model found, training from scratch.")
 
     for game_index in range(num_games):
+        print(f"=== Game {game_index + 1} ===")
         env = OthelloEnv()
-        random_agent_black = RandomPlayer(BLACK)
+        random_agent_black = MinimaxPlayer(BLACK)
 
         observation, info = env.reset()
         done = False
@@ -95,7 +96,7 @@ if __name__ == "__main__":
         if len(agent_white.memory) > BATCH_SIZE:
                 agent_white.replay(BATCH_SIZE)
         # Vẽ biểu đồ mỗi 50 game
-        if game_index % 500 == 0 and game_index > 0:
+        if game_index % 1 == 0 and game_index > 0:
             metrics.plot()
             print(f"Đã lưu biểu đồ tại training_metrics_{game_index}.png")
             

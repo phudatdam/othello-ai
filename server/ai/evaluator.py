@@ -59,6 +59,7 @@ def minimax(board_state, depth, player, isMax, alpha, beta):
     Returns:
         score: The evaluation score for the current board state.
     """
+    print('depth:', depth)
     # Use transposition table to avoid re-evaluating the same board state
     key = (board_hash(board_state), depth, player, isMax)
     if key in transposition_table:

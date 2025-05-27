@@ -21,25 +21,29 @@ class MinimaxPlayer:
         Returns:
             bestMove: The best move for the player in the form (row, col).
         """
-        return self.find_best_move(game.board_state)
+        return self.find_best_move(game)
     
-    def find_best_move(self, board_state):
+    def find_best_move(self, game):
         start = time.time()
-        best_val = -evaluator.INFINITY
+        best_val = -evaluator.INFINITY - 1
         best_move = None
-        
-        for move in utils.get_valid_moves(board_state, self.player):
-            # Áp dụng nước đi lên temp_board
+        # Lấy player hiện tại từ game
+        player = self.player
+        # Lấy nước đi hợp lệ từ game cho player này
+        valid_moves = game.get_valid_moves
+        for move in valid_moves:
             row, col = move
-            next_board = utils.make_move(board_state, row, col, self.player)
-            # Đánh giá trạng thái sau khi đi
-            depth = evaluator.get_search_depth(board_state)
-            value = evaluator.minimax(next_board, depth, self.player, False, -evaluator.INFINITY, evaluator.INFINITY)
+            board = copy.deepcopy(game.board_state)
+            utils.make_move(board, row, col, player)
+            depth = evaluator.get_search_depth(board)
+            value = evaluator.minimax(board, depth, player, False, -evaluator.INFINITY, evaluator.INFINITY)
+            print("Move của black:", move, "giá trị:", value)
             if value >= best_val:
                 best_val = value
                 best_move = move
         end = time.time()
         print(f"Minimax evaluation time: {end - start:.4f} seconds")
+        print(f"Best move: {best_move} with value: {best_val}")
         return best_move
     
 class RandomPlayer():
