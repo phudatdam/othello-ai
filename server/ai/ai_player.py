@@ -1,6 +1,5 @@
 import random
-import utils
-from ai import evaluator
+from ai import minimax
 import numpy as np
 import torch
 from network.q_learning import QNetwork, QNetworkAgent
@@ -22,20 +21,11 @@ class MinimaxPlayer:
     
     def find_best_move(self, board_state):
         # start = time.time()
-        best_val = -evaluator.INFINITY
-        best_move = None
-        
-        for move in utils.get_valid_moves(board_state, self.player):
-            # Áp dụng nước đi lên temp_board
-            row, col = move
-            next_board = utils.make_move(board_state, row, col, self.player)
-            # Đánh giá trạng thái sau khi đi
-            value = evaluator.minimax(next_board, 4, self.player, False, -evaluator.INFINITY, evaluator.INFINITY)
-            if value >= best_val:
-                best_val = value
-                best_move = move
+        max_depth = 4
+        time_limit = 5
+        best_move = minimax.id_minimax(board_state, self.player, max_depth, time_limit)
         # end = time.time()
-        # print(f"Minimax evaluation time: {end - start:.4f} seconds")
+        # print(f"Iterative deepening evaluation time: {end - start:.4f} seconds")
         return best_move
     
 

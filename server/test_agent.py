@@ -133,7 +133,7 @@ if __name__ == "__main__":
     # For demonstration, let's use RandomPlayer and another RandomPlayer
     # You would replace these with your trained QLearningPlayer, MiniMax_Player, etc.
     agent_a = MinimaxPlayer(BLACK) # Example: Assuming AIPlayer can be initialized without a color initially
-    agent_b = QLearningPlayer(WHITE) # Example: Assuming AIPlayer can be initialized without a color initially
+    agent_b = RandomPlayer(WHITE) # Example: Assuming AIPlayer can be initialized without a color initially
 
     print(f"\n=== Starting {num_games_to_play} games between {str(agent_a)} and {str(agent_b)} ===")
     game_results = test_agent(num_games_to_play, agent_a, agent_b)
