@@ -41,11 +41,9 @@ if __name__ == "__main__":
         prev_state = None
         white_action = None
         total_reward = 0
-        count = 0
         while not done:
-            print("In ra count để biết vòng lặp có bị vô hạn không:", count)
-            count += 1
             # === PHASE 1: BLACK'S TURN ===
+            """
             valid_moves_black = env.game.get_valid_moves
             if not valid_moves_black:
                 # Nếu BLACK không có nước đi, kiểm tra WHITE
@@ -53,6 +51,7 @@ if __name__ == "__main__":
                 if not valid_moves_white:
                     print("Cả hai bên đều không còn nước đi. Kết thúc game!")
                     break
+            """
             move = random_agent_black.play(env.game)
             if move is not None:
                 row, col = move
@@ -79,12 +78,15 @@ if __name__ == "__main__":
                 break
             # === PHASE 2: WHITE'S TURN ===
             valid_moves_white = env.game.get_valid_moves
+            """
+            print("valid_moves_white:", valid_moves_white)
             if not valid_moves_white:
                 # Nếu WHITE không có nước đi, kiểm tra BLACK
                 valid_moves_black = env.game.get_valid_moves if env.game.turn == BLACK else utils.get_valid_moves(env.game.board_state, BLACK)
                 if not valid_moves_black:
                     print("Cả hai bên đều không còn nước đi. Kết thúc game!")
                     break
+            """
             prev_state = agent_white.encode_state(observation)
             if valid_moves_white:
                 action = agent_white.choose_action(observation, valid_moves_white)

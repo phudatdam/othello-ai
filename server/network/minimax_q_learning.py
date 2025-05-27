@@ -45,7 +45,7 @@ class MinimaxQAgent:
         self.gamma = 0.95
         self.epsilon = 1.0
         self.epsilon_min = 0
-        self.epsilon_decay = 0.0075
+        self.epsilon_decay = 0.999
         self.current_loss = 0.0
         self.losses = []
         self.memory = deque(maxlen=15000)
@@ -64,14 +64,13 @@ class MinimaxQAgent:
             board = np.where(board == WHITE, -1, board)
         return torch.tensor(board, dtype=torch.float32)
 
-    def choose_action(self, obs, valid_agent_moves):
-        if random.random() < self.epsilon:
-            return random.choice(valid_agent_moves)
+    
 
+    def choose_exploitation_action(self, obs, valid_agent_moves):
         self.model.eval()
         state_tensor = self.encode_state(obs)
-        best_action = (-1, -1) # Khởi tạo action không hợp lệ
-        best_value = -1.0
+        best_action = None
+        best_value = -float('inf')
 
         # Tạo bản sao game từ observation
         current_board = np.array(obs['board']).reshape(8, 8).tolist()
@@ -92,6 +91,7 @@ class MinimaxQAgent:
             # Lấy nước đi hợp lệ của đối thủ
             valid_opponent_moves = temp_game.get_valid_moves
             if not valid_opponent_moves:
+                self.model.train()
                 return a  # Đối thủ không có nước đi
 
             # Tính min Q-value cho từng phản ứng của đối thủ
@@ -100,12 +100,12 @@ class MinimaxQAgent:
                 # Tạo input tensor: state + (a, o)
                 input_tensor = torch.cat([
                     state_tensor,
-                    torch.tensor([a[0], a[1], o[0], o[1]], dtype=torch.float32)
+                    torch.tensor([a[0]/7.0, a[1]/7.0, o[0]/7.0, o[1]/7.0], dtype=torch.float32)
                 ]).unsqueeze(0)
-                
+
                 with torch.no_grad():
                     q_val = self.model(input_tensor).item()
-                
+
                 min_q = min(min_q, q_val)
 
             if min_q > best_value:
@@ -114,6 +114,11 @@ class MinimaxQAgent:
 
         self.model.train()
         return best_action
+
+    def choose_action(self, obs, valid_agent_moves):
+        if random.random() < self.epsilon:
+            return random.choice(valid_agent_moves)
+        return self.choose_exploitation_action(obs, valid_agent_moves)
 
     def replay_buffer_save(self, state, action, opponent_action, reward, next_state, done):
         self.memory.append((state, action, opponent_action, reward, next_state, done))
@@ -201,6 +206,8 @@ class MinimaxQAgent:
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
             self.optimizer.step()
 
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
             self.train_step += 1
             if self.train_step % self.update_target_steps == 0:
                 self.target_model.load_state_dict(self.model.state_dict())

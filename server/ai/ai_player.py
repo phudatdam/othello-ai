@@ -113,11 +113,11 @@ class MinimaxQLearningPlayer:
         from network.minimax_q_learning import MinimaxQAgent
         self.agent = MinimaxQAgent()
         # Load minimax Q-network nếu có
-        model_path = "models/minimax_q_network.pt"
-        if os.path.exists(model_path):
-            self.agent.model.load_state_dict(torch.load(model_path))
+        mnm_q_model_path = "models/minimax_q_network.pt"
+        if os.path.exists(mnm_q_model_path):
+            self.agent.model.load_state_dict(torch.load(mnm_q_model_path))
             self.agent.model.eval()
-            print("MinimaxQ model loaded from", model_path)
+            print("MinimaxQ model loaded from", mnm_q_model_path)
         else:
             print("No MinimaxQ model found, using random weights.")
 
@@ -135,9 +135,8 @@ class MinimaxQLearningPlayer:
         if not valid_moves:
             return None
         board = np.array(game.board_state)
-        state_tensor = self.get_state_tensor(board, self.player)
         obs = {'board': board, 'turn': self.player}
         # Sử dụng agent để chọn action minimax Q
-        action = self.agent.choose_action(obs, valid_moves)
+        action = self.agent.choose_exploitation_action(obs, valid_moves)
         return action
 
