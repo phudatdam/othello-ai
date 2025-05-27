@@ -22,7 +22,7 @@ class QNetwork(nn.Module):
             layers.append(nn.ReLU())
 
         layers.append(nn.Linear(hidden_dim, output_dim))
-        layers.append(nn.Softmax(dim=-1))  # Dành cho phân phối xác suất các hành động
+        #layers.append(nn.Softmax(dim=-1))  # Dành cho phân phối xác suất các hành động
 
         self.model = nn.Sequential(*layers)
 

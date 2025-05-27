@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import os
 from network.q_learning import QNetwork, QNetworkAgent
+from network.policy_network import PolicyNetwork
 import time
 
 class MinimaxPlayer:
@@ -69,8 +70,9 @@ class RandomPlayer():
         return self.get_random_move(game)
     
 
-q_model_path = "models/q_network.pt"
-
+q_model_path = "models/q_network_model_sau_hon.pt"
+q_model_path1 = "models/q_network.pt"
+q_model_path2="models/MCTS_vs_q.pt"
 class QLearningPlayer:
     def __init__(self, player):
         self.player = player
@@ -78,8 +80,8 @@ class QLearningPlayer:
 
         # Load Q-network
         self.model = QNetwork();
-        self.model.load_state_dict(torch.load(q_model_path))
-        print("Model loaded from", q_model_path)
+        self.model.load_state_dict(torch.load(q_model_path1))
+        print("Model loaded from", q_model_path1)
         self.model.eval()  # Set model to evaluation mode
 
     def get_state_tensor(self, board, turn):
@@ -142,3 +144,37 @@ class MinimaxQLearningPlayer:
         action = self.agent.choose_action(obs, valid_moves)
         return action
 
+class MCTSPlayer:
+    def __init__(self, player):
+        self.player = player
+        self.board_size = 8
+        self.model = PolicyNetwork()
+        self.model.load_state_dict(torch.load(q_model_path2))
+        print("Model loaded from", q_model_path2)
+        self.model.eval()  # Set model to evaluation mode
+        
+    def get_state_tensor(self, board, turn):
+        if turn == 2:
+            board = np.where(board == 1, -1, board)
+            board = np.where(board == 2, 1, board)
+        else:
+            board = np.where(board == 1, 1, board)
+            board = np.where(board == 2, -1, board)
+        return torch.tensor(board, dtype=torch.float32).reshape(-1)
+
+    def play(self, game):
+        valid_moves = game.get_valid_moves
+        if not valid_moves:
+            return None
+
+        board = np.array(game.board_state)
+
+        state_tensor = self.get_state_tensor(board, self.player)
+
+        with torch.no_grad():
+            q_values = self.model(state_tensor).cpu().numpy().flatten()
+
+        # Lọc Q-values theo hành động hợp lệ
+        best_action = max(valid_moves, key=lambda a: q_values[a[0] * 8 + a[1]])
+        return best_action
+        

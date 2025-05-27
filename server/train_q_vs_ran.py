@@ -5,8 +5,9 @@ from network.metrics import TrainingMetrics
 from ai.ai_player import RandomPlayer, MinimaxPlayer  # Random player
 import os
 import torch
+from tqdm import tqdm
 BATCH_SIZE=32
-MODEL_PATH = "models/q_network.pt"
+MODEL_PATH = "models/q_network_vs_minimax.pt"
 PASS_ACTION = -9
 if __name__ == "__main__":
     metrics = TrainingMetrics()
@@ -14,7 +15,7 @@ if __name__ == "__main__":
     total_white_win = 0
     total_draw = 0
 
-    num_games = 1000
+    num_games = 200
 
     # Tải model đã huấn luyện
     agent_white = QNetworkAgent()
@@ -25,9 +26,9 @@ if __name__ == "__main__":
     else:
         print("⚠️ No saved model found, training from scratch.")
 
-    for game_index in range(num_games):
+    for game_index in tqdm(range(num_games)):
         env = OthelloEnv()
-        random_agent_black = RandomPlayer(BLACK)
+        random_agent_black = MinimaxPlayer(BLACK)
 
         observation, info = env.reset()
         done = False
@@ -95,7 +96,7 @@ if __name__ == "__main__":
         if len(agent_white.memory) > BATCH_SIZE:
                 agent_white.replay(BATCH_SIZE)
         # Vẽ biểu đồ mỗi 50 game
-        if game_index % 500 == 0 and game_index > 0:
+        if game_index % 5 == 0 and game_index > 0:
             metrics.plot()
             print(f"Đã lưu biểu đồ tại training_metrics_{game_index}.png")
             
