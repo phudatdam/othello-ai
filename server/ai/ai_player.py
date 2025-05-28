@@ -1,15 +1,16 @@
 import random
 from ai import minimax
 import numpy as np
-import torch
 import os
 import time
 from network.q_learning import QNetwork, QNetworkAgent
 import time
+import torch
 
 class MinimaxPlayer:
-    def __init__(self, player):
+    def __init__(self, player, max_depth):
         self.player = player
+        self.max_depth = max_depth
 
     def play(self, game):
         """
@@ -22,12 +23,11 @@ class MinimaxPlayer:
         return self.find_best_move(game.board_state)
     
     def find_best_move(self, board_state):
-        # start = time.time()
-        max_depth = 4
+        start = time.time()
         time_limit = 5
-        best_move = minimax.id_minimax(board_state, self.player, max_depth, time_limit)
-        # end = time.time()
-        # print(f"Iterative deepening evaluation time: {end - start:.4f} seconds")
+        best_move = minimax.id_minimax(board_state, self.player, self.max_depth, time_limit)
+        end = time.time()
+        #print(f"Iterative deepening evaluation time: {end - start:.4f} seconds")
         return best_move
     
 class RandomPlayer():

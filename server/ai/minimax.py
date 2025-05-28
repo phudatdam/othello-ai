@@ -1,11 +1,10 @@
 import time
 import utils
 from ai import evaluator
-
+import pickle
+import random
 INFINITY = 100_000
 transposition_table = {}
-
-
 def id_minimax(board_state, player, max_depth, time_limit=None):
     """
     Iterative deepening wrapper for minimax.
@@ -25,16 +24,16 @@ def id_minimax(board_state, player, max_depth, time_limit=None):
 
     for depth in range(1, max_depth + 1):
         current_best_val = -INFINITY
-        current_best_move = None
+        current_best_move = random.choice(valid_moves)  # Start with a random valid move
         for move in valid_moves:
+            if time_limit and (time.time() - start_time) > time_limit:
+                return best_move if best_move is not None else current_best_move
             row, col = move
             next_board = utils.make_move(board_state, row, col, player)
             val = minimax(next_board, depth, player, False, -INFINITY, INFINITY)
             if val > current_best_val:
                 current_best_val = val
                 current_best_move = move
-            if time_limit and (time.time() - start_time) > time_limit:
-                return best_move if best_move is not None else current_best_move
         best_move = current_best_move
         if time_limit and (time.time() - start_time) > time_limit:
             break

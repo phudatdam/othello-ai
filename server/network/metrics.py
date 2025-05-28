@@ -3,14 +3,14 @@ import numpy as np
 
 class TrainingMetrics:
     def __init__(self):
-        self.win_rates = []
+        self.win_label = []
         self.losses = []
         self.epsilons = []
         self.rewards = []
         self.moving_avg_window = 20  # Cửa sổ trung bình động
-        
-    def update(self, win_rate, loss, epsilon, reward):
-        self.win_rates.append(win_rate)
+    
+    def update(self, win_label, loss, epsilon, reward):
+        self.win_label.append(win_label)
         self.losses.append(loss)
         self.epsilons.append(epsilon)
         self.rewards.append(reward)
@@ -23,8 +23,9 @@ class TrainingMetrics:
         
         # Vẽ 4 subplots
         plt.subplot(2, 2, 1)
-        plt.plot(self.win_rates, label='Tỷ lệ thắng thực tế')
-        plt.plot(moving_avg(self.win_rates), 
+        average = lambda x: [np.mean(x[:i+1]) for i in range(len(x))]  # Trung bình cộng tích lũy
+        plt.plot(average(self.win_label), label='Tỷ lệ thắng thực tế')
+        plt.plot(moving_avg(self.win_label), 
                 label=f'Trung bình {self.moving_avg_window} game gần nhất', 
                 color='red', linewidth=2)
         plt.title('TỶ LỆ THẮNG CỦA AGENT')

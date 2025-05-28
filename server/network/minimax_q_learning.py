@@ -12,24 +12,21 @@ WHITE = 2
 
 """ Khởi tạo mạng Q-Learning"""
 class MinimaxQNetwork(nn.Module):
-    def __init__(self, input_dim=68, output_dim=1, hidden_dim=256, num_layers=3):
+    def __init__(self, input_dim=68, output_dim=1, hidden_dim=128, num_layers=4):
         super().__init__()
         
         layers = []
         layers.append(nn.Linear(input_dim, hidden_dim))
+        layers.append(nn.LayerNorm(hidden_dim),)
 
         for _ in range(num_layers - 2):
             layers.append(nn.Linear(hidden_dim, hidden_dim))
             layers.append(nn.ReLU())
+            layers.append(nn.Dropout(0.3))
 
         layers.append(nn.Linear(hidden_dim, output_dim))
         
         self.model = nn.Sequential(*layers)
-                
-        for m in self.modules():
-            if isinstance(m, nn.Linear):
-                nn.init.uniform_(m.weight, a=-0.5, b=0.5)
-                nn.init.constant_(m.bias, 0.0)
 
 
     def forward(self, x):
@@ -45,7 +42,7 @@ class MinimaxQAgent:
         self.gamma = 0.95
         self.epsilon = 1.0
         self.epsilon_min = 0
-        self.epsilon_decay = 0.999
+        self.epsilon_decay = 0.995
         self.current_loss = 0.0
         self.losses = []
         self.memory = deque(maxlen=15000)
@@ -151,6 +148,12 @@ class MinimaxQAgent:
                 if valid_agent_moves:
                     max_min_q = -1.0
                     for a_prime in valid_agent_moves:
+                        #Nếu a_prime là góc
+                        #if (a_prime[0], a_prime[1]) in [(0,0), (0,7), (7,0), (7,7)]:
+                        #   max_min_q = 1.5
+                        #   print("You make a corner so claim a reward")
+                        #   break
+
                         temp_game_copy = Game()
                         temp_game_copy.board_state = copy.deepcopy(temp_board_state)
                         temp_game_copy.turn = WHITE
@@ -158,14 +161,15 @@ class MinimaxQAgent:
                             temp_game_copy.play(WHITE, a_prime[0], a_prime[1])
                         except:
                             continue
-                       
+                        
+                        
                         valid_opponent_moves = temp_game_copy.get_valid_moves
 
                         if not valid_opponent_moves:
-                            min_q = 0.8
+                            min_q = 1.2
                             #print("You make opponent pass so claim a reward")
                         else:
-                            min_q = 0.8
+                            min_q = 1.0
                             for o_prime in valid_opponent_moves:
                                 next_input = torch.cat([
                                     next_state_tensor,
@@ -174,6 +178,7 @@ class MinimaxQAgent:
                                 with torch.no_grad():
                                     q_val = self.target_model(next_input).item()
                                 min_q = min(min_q, q_val)
+        
 
                         max_min_q = max(max_min_q, min_q)
 
@@ -184,7 +189,7 @@ class MinimaxQAgent:
                         min_q = 0.0
                     else:
                         #print("You already don't have turn so claim a punishment")
-                        min_q = -0.3
+                        min_q = -0.2
                         for o_prime in valid_opponent_moves:
                             next_input = torch.cat([
                                 next_state_tensor,
@@ -195,7 +200,8 @@ class MinimaxQAgent:
                             min_q = min(min_q, q_val)
                     max_min_q = min_q
 
-                target = torch.tensor([[reward + self.gamma * max_min_q]], dtype=torch.float32)
+                target = torch.tensor([[max(-1.0, min(1.0, reward + self.gamma * max_min_q))]], dtype=torch.float32)
+
 
             pred = self.model(input_tensor)
             loss = self.criterion(pred, target)
@@ -206,8 +212,6 @@ class MinimaxQAgent:
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
             self.optimizer.step()
 
-            if self.epsilon > self.epsilon_min:
-                self.epsilon *= self.epsilon_decay
             self.train_step += 1
             if self.train_step % self.update_target_steps == 0:
                 self.target_model.load_state_dict(self.model.state_dict())

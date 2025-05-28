@@ -45,7 +45,6 @@ class OthelloEnv(gym.Env):
         # Nếu action là -9: pass turn (bị mất lượt)
         if action == -9:
             #print("Player", self.game.turn, "passes their turn.")
-            self.game.turn = 3 - self.game.turn  # Đổi lượt cho người chơi tiếp theo
             terminated = self.game.is_game_over
             reward = self._get_reward()
             truncated = False
