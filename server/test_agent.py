@@ -55,11 +55,17 @@ def test_agent(num_games, agent1, agent2):
 
         observation, info = env.reset()
         done = False
-
+        BLACK_COUNT = 0
+        black_random_initial_player = RandomPlayer(env.game)
         while not done:
-            current_agent = black_player if env.game.turn == BLACK else white_player
+            if env.game.turn == BLACK:
+                if BLACK_COUNT >= 5: 
+                    current_agent = black_player
+                else: 
+                    current_agent = black_random_initial_player
+                    BLACK_COUNT += 1
+            else: current_agent = white_player
             action = current_agent.play(env.game)
-
             # Convert action (row, col) to action index
             if action is not None:
                 row, col = action
@@ -98,7 +104,7 @@ def test_agent(num_games, agent1, agent2):
 
 if __name__ == "__main__":
     # Example Usage:
-    num_games_to_play = 50
+    num_games_to_play = 100
 
     # Make sure to replace these with actual instances of your player classes
     # For demonstration, let's use RandomPlayer and another RandomPlayer
