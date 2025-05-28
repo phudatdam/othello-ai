@@ -17,7 +17,7 @@ if __name__ == "__main__":
     total_black_win = 0
     total_white_win = 0
     total_draw = 0
-    num_games = 100
+    num_games = 150
 
     agent_white = MinimaxQAgent()
     if os.path.exists(MODEL_PATH):
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         print("⚠️ No saved model found, training from scratch.")
     game_total = 0
     temp = 1
-    for prob in range (0, 10):
+    for prob in range (1, 2):
         minimax_agent_black = MinimaxPlayer(BLACK, 2)
         #agent_white.epsilon = 1.0
         for game_index_per_depth in range(num_games):
@@ -59,8 +59,8 @@ if __name__ == "__main__":
                         break
                 """
 
-                move = random_agent_black.play(env.game) if temp >= prob else minimax_agent_black.play(env.game)
-                temp = (temp+1)%10
+                move = minimax_agent_black.play(env.game)
+                #temp = (temp+1)%10
                 if move is not None:
                     row, col = move
                 else:
@@ -124,11 +124,10 @@ if __name__ == "__main__":
                 epsilon=agent_white.epsilon,
                 reward=total_reward
             )
-            if agent_white.epsilon > agent_white.epsilon_min:
-                agent_white.epsilon *= agent_white.epsilon_decay
+            
             # Train định kỳ
-            if len(agent_white.memory) > 32:
-                agent_white.replay(32)
+            if len(agent_white.memory) > 64:
+                agent_white.replay(64)
             
             # Vẽ biểu đồ mỗi 50 game
             if game_total % 20 == 0 and game_total > 0:

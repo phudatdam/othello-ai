@@ -211,7 +211,8 @@ class MinimaxQAgent:
             loss.backward()
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
             self.optimizer.step()
-
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
             self.train_step += 1
             if self.train_step % self.update_target_steps == 0:
                 self.target_model.load_state_dict(self.model.state_dict())

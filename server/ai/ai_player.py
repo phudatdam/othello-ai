@@ -27,7 +27,7 @@ class MinimaxPlayer:
         time_limit = 5
         best_move = minimax.id_minimax(board_state, self.player, self.max_depth, time_limit)
         end = time.time()
-        print(f"Iterative deepening evaluation time: {end - start:.4f} seconds, player: {self.player}")
+        #print(f"Iterative deepening evaluation time: {end - start:.4f} seconds, player: {self.player}")
         return best_move
     
 class RandomPlayer():
