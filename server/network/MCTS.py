@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
+import cupy as np
 import random
 import math
 import copy
 from collections import deque
 from othello import Game # Giả sử bạn có file othello.py và utils.py
-from policy_network import PolicyNetwork, PolicyAgent # Import từ file policy_learning.py đã tạo trước đó
+from network.policy_network import PolicyNetwork, PolicyAgent # Import từ file policy_learning.py đã tạo trước đó
 
 # Định nghĩa các hằng số màu quân cờ
 BLACK = 1

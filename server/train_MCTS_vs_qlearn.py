@@ -7,16 +7,19 @@ import os
 import torch
 from tqdm import tqdm
 BATCH_SIZE=32
-MODEL_PATH = "models/MCTS_vs_q.pt"
+MODEL_PATH = "models/MCTS_vs_Mini.pt"
 PASS_ACTION = -9 # Giá trị này cần khớp với PASS_ACTION_VALUE trong policy_network.py nếu bạn muốn lọc nó
 
+
 if __name__ == "__main__":
+    device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
+    print(f'Device: {device}')
     metrics = TrainingMetrics()
     total_black_win = 0
     total_white_win = 0
     total_draw = 0
 
-    num_games = 2000
+    num_games = 200
 
     # Tải model đã huấn luyện
     agent_white = PolicyAgent()
@@ -32,7 +35,7 @@ if __name__ == "__main__":
 
     for game_index in tqdm(range(num_games)):
         env = OthelloEnv()
-        random_agent_black = RandomPlayer(BLACK) # Sử dụng RandomPlayer từ ai_player.py
+        random_agent_black = MinimaxPlayer(BLACK) # Sử dụng RandomPlayer từ ai_player.py
 
         observation, info = env.reset()
         done = False
@@ -41,7 +44,9 @@ if __name__ == "__main__":
         total_reward = 0
 
         while not done:
+            env.render()
             if current_player == WHITE:
+                
                 # Lấy nước đi hợp lệ dưới dạng tuple (row, col)
                 valid_moves_tuples = env.game.get_valid_moves
                 
@@ -113,8 +118,9 @@ if __name__ == "__main__":
         )
         
         # Vẽ biểu đồ mỗi 5 game (hoặc số lượng bạn muốn)
-        if game_index % 1000 == 0 and game_index > 0:
+        if game_index % 10 == 0 and game_index > 0:
             metrics.plot(save_path=f"training_metrics_{game_index}.png") # Lưu với tên khác nhau
+            torch.save(agent_white.policy_network.state_dict(), MODEL_PATH)
             print(f"Đã lưu biểu đồ tại training_metrics_{game_index}.png")
             
     # Vẽ biểu đồ cuối cùng
