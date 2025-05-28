@@ -1,6 +1,6 @@
 import gymnasium as gym
 from gymnasium import spaces
-import numpy as np
+import cupy as np
 from othello import Game, BLACK, WHITE  # Import lớp Game của bạn
 
 

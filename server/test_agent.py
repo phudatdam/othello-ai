@@ -1,6 +1,6 @@
 from test_environment import OthelloEnv  # Môi trường Othello
 from othello import BLACK, WHITE
-from ai.ai_player import QLearningPlayer, RandomPlayer, MinimaxPlayer, MinimaxQLearningPlayer,MCTSPlayer  # Player của bạn
+from ai.ai_player import QLearningPlayer, RandomPlayer, MinimaxPlayer, MinimaxQLearningPlayer, Policy_Net_Player, MCTS_Player  # Player của bạn
 
 def test_agent(num_games, agent1, agent2):
     """
@@ -55,14 +55,9 @@ def test_agent(num_games, agent1, agent2):
 
         observation, info = env.reset()
         done = False
-        current_player_color = BLACK
 
         while not done:
-            if current_player_color == WHITE:
-                current_agent = white_player
-            else:
-                current_agent = black_player
-
+            current_agent = black_player if env.game.turn == BLACK else white_player
             action = current_agent.play(env.game)
 
             # Convert action (row, col) to action index
@@ -72,47 +67,25 @@ def test_agent(num_games, agent1, agent2):
             else:
                 # If no valid moves, choose the last action (handle pass)
                 action_gym = env.action_space.n - 1
-                print(f"Player {current_player_color} passes.")
+                print(f"Player {env.game.turn} passes.")
 
             next_observation, reward, terminated, truncated, info = env.step(action_gym)
             done = terminated or truncated
             observation = next_observation
-            current_player_color = 3 - current_player_color  # Switch player
-            env.render() # Uncomment to visualize each step
+            #env.render() # Uncomment to visualize each step
 
         print("Game Over!")
-        # Determine winner based on the final reward from the perspective of the last player
-        # The reward is typically > 0 for a win, < 0 for a loss, and 0 for a draw for the player whose turn just ended.
-        # However, the environment's reward at termination might be from the perspective of WHITE.
-        # Let's check the final scores to be certain.
-        # final_scores = env.game.get_scores()
-        # print(f"Final Scores: BLACK = {final_scores[BLACK]}, WHITE = {final_scores[WHITE]}")
-
-        # if final_scores[BLACK] > final_scores[WHITE]:
-        #     print("BLACK wins!")
-        #     if agent1_color == BLACK:
-        #         results[str(agent1)] += 1
-        #     else:
-        #         results[str(agent2)] += 1
-        # elif final_scores[WHITE] > final_scores[BLACK]:
-        #     print("WHITE wins!")
-        #     if agent1_color == WHITE:
-        #         results[str(agent1)] += 1
-        #     else:
-        #         results[str(agent2)] += 1
-        # else:
-        #     print("It's a draw!")
-        #     results["draws"] += 1
-
         winner = env.game.winner
         if winner == BLACK:
             print("BLACK wins!")
+            env.render()
             if agent1_color == BLACK:
                 results[str(agent1)] += 1
             else:
                 results[str(agent2)] += 1
         elif winner == WHITE:
             print("WHITE wins!")
+            env.render()
             if agent1_color == WHITE:
                 results[str(agent1)] += 1
             else:
@@ -125,16 +98,16 @@ def test_agent(num_games, agent1, agent2):
 
     return results
 
+
 if __name__ == "__main__":
     # Example Usage:
-    num_games_to_play = 100
+    num_games_to_play = 10
 
     # Make sure to replace these with actual instances of your player classes
     # For demonstration, let's use RandomPlayer and another RandomPlayer
     # You would replace these with your trained QLearningPlayer, MiniMax_Player, etc.
-
     agent_a = QLearningPlayer(BLACK) # Example: Assuming AIPlayer can be initialized without a color initially
-    agent_b = MinimaxPlayer(WHITE) # Example: Assuming AIPlayer can be initialized without a color initially
+    agent_b = MCTS_Player(WHITE) # Example: Assuming AIPlayer can be initialized without a color initially
 
     print(f"\n=== Starting {num_games_to_play} games between {str(agent_a)} and {str(agent_b)} ===")
     game_results = test_agent(num_games_to_play, agent_a, agent_b)

@@ -1,5 +1,5 @@
 import utils
-import numpy as np
+import cupy as np
 from othello import BLACK, WHITE
 
 INFINITY = 100_000

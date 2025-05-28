@@ -1,12 +1,14 @@
 import random
 import utils
 from ai import evaluator
-import numpy as np
+import cupy as np
 import torch
 import os
 from network.q_learning import QNetwork, QNetworkAgent
-from network.policy_network import PolicyNetwork
+from network.policy_network import PolicyNetwork, PolicyAgent
+from network.MCTS import MCTSPolicyAgent
 import time
+from ai import minimax
 
 class MinimaxPlayer:
     def __init__(self, player):
@@ -24,20 +26,11 @@ class MinimaxPlayer:
     
     def find_best_move(self, board_state):
         # start = time.time()
-        best_val = -evaluator.INFINITY
-        best_move = None
-        
-        for move in utils.get_valid_moves(board_state, self.player):
-            # Áp dụng nước đi lên temp_board
-            row, col = move
-            next_board = utils.make_move(board_state, row, col, self.player)
-            # Đánh giá trạng thái sau khi đi
-            value = evaluator.minimax(next_board, 4, self.player, False, -evaluator.INFINITY, evaluator.INFINITY)
-            if value >= best_val:
-                best_val = value
-                best_move = move
+        max_depth = 4
+        time_limit = 7
+        best_move = minimax.id_minimax(board_state, self.player, max_depth, time_limit)
         # end = time.time()
-        # print(f"Minimax evaluation time: {end - start:.4f} seconds")
+        # print(f"Iterative deepening evaluation time: {end - start:.4f} seconds")
         return best_move
     
 
@@ -144,7 +137,7 @@ class MinimaxQLearningPlayer:
         action = self.agent.choose_action(obs, valid_moves)
         return action
 
-class MCTSPlayer:
+class Policy_Net_Player:
     def __init__(self, player):
         self.player = player
         self.board_size = 8
@@ -177,4 +170,39 @@ class MCTSPlayer:
         # Lọc Q-values theo hành động hợp lệ
         best_action = max(valid_moves, key=lambda a: q_values[a[0] * 8 + a[1]])
         return best_action
+    
+class MCTS_Player:
+    def __init__(self, player):
+        self.player = player
+        self.board_size = 8
+        self.nigga= PolicyAgent()
+        self.model = PolicyNetwork()
+        self.model.load_state_dict(torch.load(q_model_path2))
+        print("Model loaded from", q_model_path2)
+        self.model.eval()  # Set model to evaluation mode
+        self.agent = MCTSPolicyAgent(policy_agent=self.nigga, n_simulations=1000)
+        
+    def get_state_tensor(self, board, turn):
+        if turn == 2:
+            board = np.where(board == 1, -1, board)
+            board = np.where(board == 2, 1, board)
+        else:
+            board = np.where(board == 1, 1, board)
+            board = np.where(board == 2, -1, board)
+        return torch.tensor(board, dtype=torch.float32).reshape(-1)
+    
+    def play(self, game):
+        valid_moves = game.get_valid_moves
+        if not valid_moves:
+            return None
+        
+        board = np.array(game.board_state)
+        state_tensor = self.get_state_tensor(board, self.player)
+
+        with torch.no_grad():
+            q_values = self.model(state_tensor).cpu().numpy().flatten()
+        
+        obs = {'board': board, 'turn': self.player}
+        action = self.agent.choose_action(game)
+        return action
         
