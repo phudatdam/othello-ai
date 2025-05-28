@@ -30,7 +30,7 @@ def id_minimax(board_state, player, max_depth, time_limit=None):
             row, col = move
             next_board = utils.make_move(board_state, row, col, player)
             val = minimax(next_board, depth, player, False, -INFINITY, INFINITY)
-            if val > current_best_val:
+            if val >= current_best_val:
                 current_best_val = val
                 current_best_move = move
             if time_limit and (time.time() - start_time) > time_limit:
