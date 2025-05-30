@@ -12,7 +12,7 @@ WHITE = 2
 
 """ Khởi tạo mạng Q-Learning"""
 class MinimaxQNetwork(nn.Module):
-    def __init__(self, input_dim=68, output_dim=1, hidden_dim=128, num_layers=4):
+    def __init__(self, input_dim=68, output_dim=1, hidden_dim=1024, num_layers=3):
         super().__init__()
         
         layers = []
@@ -21,8 +21,7 @@ class MinimaxQNetwork(nn.Module):
 
         for _ in range(num_layers - 2):
             layers.append(nn.Linear(hidden_dim, hidden_dim))
-            layers.append(nn.ReLU())
-            layers.append(nn.Dropout(0.3))
+            layers.append(nn.Sigmoid())
 
         layers.append(nn.Linear(hidden_dim, output_dim))
         
@@ -40,9 +39,9 @@ class MinimaxQAgent:
         self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001)
         self.gamma = 0.95
-        self.epsilon = 1.0
+        self.epsilon = 1
         self.epsilon_min = 0
-        self.epsilon_decay = 0.995
+        self.epsilon_decay = 0.99
         self.current_loss = 0.0
         self.losses = []
         self.memory = deque(maxlen=15000)
@@ -211,8 +210,7 @@ class MinimaxQAgent:
             loss.backward()
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
             self.optimizer.step()
-            if self.epsilon > self.epsilon_min:
-                self.epsilon *= self.epsilon_decay
+            
             self.train_step += 1
             if self.train_step % self.update_target_steps == 0:
                 self.target_model.load_state_dict(self.model.state_dict())

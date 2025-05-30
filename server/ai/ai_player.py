@@ -8,9 +8,10 @@ import time
 import torch
 
 class MinimaxPlayer:
-    def __init__(self, player, max_depth):
+    def __init__(self, player, max_depth, time_limit = 5):
         self.player = player
         self.max_depth = max_depth
+        self.time_limit = time_limit
 
     def play(self, game):
         """
@@ -24,10 +25,9 @@ class MinimaxPlayer:
     
     def find_best_move(self, board_state):
         start = time.time()
-        time_limit = 5
-        best_move = minimax.id_minimax(board_state, self.player, self.max_depth, time_limit)
+        best_move = minimax.id_minimax(board_state, self.player, self.max_depth, self.time_limit)
         end = time.time()
-        #print(f"Iterative deepening evaluation time: {end - start:.4f} seconds, player: {self.player}")
+        print(f"Iterative deepening evaluation time: {end - start:.4f} seconds, player: {self.player}")
         return best_move
     
 class RandomPlayer():

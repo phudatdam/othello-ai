@@ -61,7 +61,7 @@ class OthelloEnv(gym.Env):
             self.game.play(player, row, col)
         except ValueError:
             # Hành động không hợp lệ
-            reward = -10  # Phạt nặng hành động không hợp lệ
+            reward = -2  # Phạt nặng hành động không hợp lệ
             terminated = self.game.is_game_over
             truncated = False
             observation = self._get_obs()

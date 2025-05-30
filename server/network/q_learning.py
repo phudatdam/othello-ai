@@ -10,13 +10,13 @@ WHITE = 2
 
 dim = 3
 class QNetwork(nn.Module):
-    def __init__(self, input_dim=64, output_dim=64, hidden_dim=256, num_layers=3, learning_rate=0.001):
+    def __init__(self, input_dim=64, output_dim=64, hidden_dim=1024, num_layers=3, learning_rate=0.001):
         super(QNetwork, self).__init__()
         self.learning_rate = learning_rate
 
         layers = []
         layers.append(nn.Linear(input_dim, hidden_dim))
-
+        layers.append(nn.LayerNorm(hidden_dim),)
         for _ in range(num_layers - 2):
             layers.append(nn.Linear(hidden_dim, hidden_dim))
             layers.append(nn.ReLU())
@@ -34,17 +34,17 @@ class QNetworkAgent:
         self.target_model = QNetwork()
         self.target_model.load_state_dict(self.model.state_dict())
         self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001)
         self.gamma = 0.95
-        self.epsilon = 0.8
+        self.epsilon = 1.0
         self.epsilon_min = 0
-        self.epsilon_decay = 0.9
+        self.epsilon_decay = 0.99
         self.current_loss = 0.0
         self.losses = []
         self.memory = deque(maxlen=15000)
         self.update_target_steps = 1000
         self.train_step = 0
-        self.max_grad_norm = 1.0
+        self.max_grad_norm = 1
 
     def encode_state(self, obs):
         board = obs['board'].reshape(-1)
@@ -102,7 +102,3 @@ class QNetworkAgent:
         self.train_step += 1
         if self.train_step % self.update_target_steps == 0:
             self.target_model.load_state_dict(self.model.state_dict())
-
-        # Epsilon decay
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
