@@ -6,7 +6,7 @@ from ai.ai_player import MinimaxPlayer, RandomPlayer
 from network.minimax_q_learning import MinimaxQAgent
 from network.metrics import TrainingMetrics
 import utils
-
+CORNERS = [(0,0), (0,7), (7,0), (7,7)]
 PASS_ACTION = -9
 WHITE = 2
 BLACK = 1
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     total_black_win = 0
     total_white_win = 0
     total_draw = 0
-    num_games = 500
+    num_games = 1000
 
     agent_white = MinimaxQAgent()
     if os.path.exists(MODEL_PATH):
@@ -28,14 +28,14 @@ if __name__ == "__main__":
         print("No saved model found, training from scratch.")
     game_total = 0
     for prob in range (1, 2):
-        minimax_agent_black = MinimaxPlayer(BLACK, 2, 0.5)
+        #minimax_agent_black = MinimaxPlayer(BLACK, 2, 0.5)
         #agent_white.epsilon = 1.0
         for game_index_per_depth in range(num_games):
             game_total += 1
             #print(f"\n=== GAME {game_total} ===")
             
             env = OthelloEnv()
-            #random_agent_black = RandomPlayer(env.game)
+            random_agent_black = RandomPlayer(env.game)
 
             observation, info = env.reset()
             #print("Trạng thái ban đầu:", env.game.turn)
@@ -46,10 +46,12 @@ if __name__ == "__main__":
             prev_state = None
             white_action = None
             total_reward = 0
+            white_reward = 0
+            black_reward = 0
             while not done:
                 # === PHASE 1: BLACK'S TURN ===
 
-                move = minimax_agent_black.play(env.game)
+                move = random_agent_black.play(env.game)
                 #temp = (temp+1)%10
                 if move is not None:
                     row, col = move
@@ -57,11 +59,17 @@ if __name__ == "__main__":
                     row, col = -1, -1  # Pass
                     env.game.turn = WHITE
                 action_flat = row * env.board_size + col
-                next_observation, reward, terminated, truncated, info = env.step(action_flat)
+                next_observation, black_reward, terminated, truncated, info = env.step(action_flat)
+
                 done = terminated or truncated
                 if prev_state is not None:
                     next_state = agent_white.encode_state(next_observation)
-                    temp_reward = reward if current_player == WHITE else -reward
+                    temp_reward = black_reward + white_reward
+                    #Thưởng thêm nếu lấy được góc
+                    if (white_action in CORNERS):
+                        temp_reward+=0.5
+                    if ((row, col) in CORNERS):
+                        temp_reward-=0.5
                     agent_white.replay_buffer_save(
                         state=prev_state,
                         action=white_action,
@@ -70,7 +78,7 @@ if __name__ == "__main__":
                         next_state=next_state,
                         done=done
                     )
-                total_reward += reward
+                total_reward += black_reward
                 
                 observation = next_observation
                 #env.render()
@@ -87,10 +95,11 @@ if __name__ == "__main__":
                     env.game.turn = BLACK
                     row, col = -1, -1  # Pass
                 action_flat = row * env.board_size + col
-                next_observation, _, _, _, _ = env.step(action_flat)
+                next_observation, white_reward, terminated, truncated, info = env.step(action_flat)
                 white_action = (row, col)
                 done = terminated or truncated
                 observation = next_observation
+                total_reward += white_reward
                 #env.render()
                     
             # === KẾT THÚC MỘT GAME ===

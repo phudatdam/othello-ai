@@ -41,7 +41,7 @@ class MinimaxQAgent:
         self.gamma = 0.95
         self.epsilon = 1
         self.epsilon_min = 0
-        self.epsilon_decay = 0.99
+        self.epsilon_decay = 0.985
         self.current_loss = 0.0
         self.losses = []
         self.memory = deque(maxlen=15000)

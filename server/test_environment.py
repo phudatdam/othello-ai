@@ -2,8 +2,8 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from othello import Game, BLACK, WHITE  # Import lớp Game của bạn
-
-
+CLAMP_VALUE = 160
+import ai.evaluator as evaluator
 """
 reset: bắt đầu 1 trò chơi mới
 _get_obs: trả về trạng thái

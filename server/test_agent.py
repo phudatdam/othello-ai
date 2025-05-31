@@ -109,7 +109,7 @@ if __name__ == "__main__":
     # Make sure to replace these with actual instances of your player classes
     # For demonstration, let's use RandomPlayer and another RandomPlayer
     # You would replace these with your trained QLearningPlayer, MiniMax_Player, etc.
-    agent_a = MinimaxPlayer(BLACK, 1) # Example: Assuming AIPlayer can be initialized without a color initially
+    agent_a = RandomPlayer(BLACK) # Example: Assuming AIPlayer can be initialized without a color initially
     agent_b = MinimaxQLearningPlayer(WHITE) # Example: Assuming AIPlayer can be initialized without a color initially
 
     print(f"\n=== Starting {num_games_to_play} games between {str(agent_a)} and {str(agent_b)} ===")
