@@ -60,7 +60,7 @@ if __name__ == "__main__":
                     env.game.turn = WHITE
                 action_flat = row * env.board_size + col
                 next_observation, black_reward, terminated, truncated, info = env.step(action_flat)
-
+                black_action = (row, col)
                 done = terminated or truncated
                 if prev_state is not None:
                     next_state = agent_white.encode_state(next_observation)
@@ -68,7 +68,7 @@ if __name__ == "__main__":
                     #Thưởng thêm nếu lấy được góc
                     if (white_action in CORNERS):
                         temp_reward+=0.5
-                    if ((row, col) in CORNERS):
+                    if (black_action in CORNERS):
                         temp_reward-=0.5
                     agent_white.replay_buffer_save(
                         state=prev_state,
