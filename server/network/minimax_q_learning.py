@@ -12,7 +12,7 @@ WHITE = 2
 
 """ Khởi tạo mạng Q-Learning"""
 class MinimaxQNetwork(nn.Module):
-    def __init__(self, input_dim=68, output_dim=1, hidden_dim=1024, num_layers=3):
+    def __init__(self, input_dim=68, output_dim=1, hidden_dim=1024, num_layers=4):
         super().__init__()
         
         layers = []
@@ -40,7 +40,7 @@ class MinimaxQAgent:
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001)
         self.gamma = 0.95
         self.epsilon = 1
-        self.epsilon_min = 0
+        self.epsilon_min = 0.05
         self.epsilon_decay = 0.985
         self.current_loss = 0.0
         self.losses = []

@@ -59,22 +59,25 @@ class OthelloEnv(gym.Env):
 
         try:
             self.game.play(player, row, col)
+            terminated = self.game.is_game_over
+            reward = self._get_reward()
+            truncated = False
+            observation = self._get_obs()
+            info = {}
+            return observation, reward, terminated, truncated, info
         except ValueError:
             # Hành động không hợp lệ
-            reward = -2  # Phạt nặng hành động không hợp lệ
+            print("Board state:", self.game.board_state)
+            print("turn" , self.game.turn)
+            print("valid moves:", self.game.get_valid_moves)
+            print(f"Invalid action by player {player}: ({row}, {col})")
+            reward = -100  # Phạt nặng hành động không hợp lệ
+            print("bad reward", reward)
             terminated = self.game.is_game_over
             truncated = False
             observation = self._get_obs()
             info = {}
             return observation, reward, terminated, truncated, info
-
-        terminated = self.game.is_game_over
-        reward = self._get_reward()
-        truncated = False
-        observation = self._get_obs()
-        info = {}
-
-        return observation, reward, terminated, truncated, info
 
     # tính toán phần thưởng khi trò chơi kết thúc
     def _get_reward(self):
