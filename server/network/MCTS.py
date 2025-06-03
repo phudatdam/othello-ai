@@ -205,6 +205,11 @@ class MCTSPolicyAgent:
         cho đến khi game kết thúc.
         Các nước đi được chọn dựa trên xác suất của Mạng Chính Sách.
         """
+        '''
+        có thể cái tiến việc chơi mô phỏng này minimax 
+        nhưng có thể dẫn đến chơi lâu hơn rất nhiều 
+        
+        '''
         current_rollout_game = game_state.copy()
         
         # Đảm bảo mạng ở chế độ đánh giá cho mô phỏng
