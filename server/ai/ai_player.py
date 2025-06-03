@@ -1,12 +1,12 @@
 import random
 import utils
 from ai import evaluator
-import cupy as np
+import numpy as np
 import torch
 import os
 from network.q_learning import QNetwork, QNetworkAgent
-from network.policy_network import PolicyNetwork, PolicyAgent
-from network.MCTS import MCTSPolicyAgent
+from network.policy_network1 import PolicyNetwork, PolicyAgent
+from network.MCTS1 import MCTSPolicyAgent
 import time
 from ai import minimax
 
@@ -66,6 +66,8 @@ class RandomPlayer():
 q_model_path = "models/q_network_model_sau_hon.pt"
 q_model_path1 = "models/q_network.pt"
 q_model_path2="models/MCTS_vs_q.pt"
+q_model_path3="models/MCTS_vs_mini.pt"
+
 class QLearningPlayer:
     def __init__(self, player):
         self.player = player
@@ -141,7 +143,7 @@ class Policy_Net_Player:
     def __init__(self, player):
         self.player = player
         self.board_size = 8
-        self.model = PolicyNetwork()
+        self.model = PolicyNetwork().to(device='cpu')
         self.model.load_state_dict(torch.load(q_model_path2))
         print("Model loaded from", q_model_path2)
         self.model.eval()  # Set model to evaluation mode
@@ -176,9 +178,9 @@ class MCTS_Player:
         self.player = player
         self.board_size = 8
         self.nigga= PolicyAgent()
-        self.model = PolicyNetwork()
-        self.model.load_state_dict(torch.load(q_model_path2))
-        print("Model loaded from", q_model_path2)
+        self.model = PolicyNetwork().to(device='cpu')
+        self.model.load_state_dict(torch.load(q_model_path3))
+        print("Model loaded from", q_model_path3)
         self.model.eval()  # Set model to evaluation mode
         self.agent = MCTSPolicyAgent(policy_agent=self.nigga, n_simulations=1000)
         
@@ -200,7 +202,7 @@ class MCTS_Player:
         state_tensor = self.get_state_tensor(board, self.player)
 
         with torch.no_grad():
-            q_values = self.model(state_tensor).cpu().numpy().flatten()
+            q_values = self.model(state_tensor).cpu().numpy().flatten() 
         
         obs = {'board': board, 'turn': self.player}
         action = self.agent.choose_action(game)
