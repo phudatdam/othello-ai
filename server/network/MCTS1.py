@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import cupy as np
+import numpy as np
 import random
 import math
 import copy
@@ -112,7 +112,7 @@ class MCTSPolicyAgent:
         # In thông tin các nút con từ gốc để debug/kiểm tra
         # print("\nThông tin các nút con từ gốc sau MCTS:")
         # for move, child_node in self.root.children.items():
-        #    print(f"Move: {move}, Visits: {child_node.n_visits}, Q-Value: {child_node.q_value:.2f}")
+        #     print(f"Move: {move}, Visits: {child_node.n_visits}, Q-Value: {child_node.q_value:.2f}")
 
         for move, child_node in self.root.children.items():
             if child_node.n_visits > max_visits:
@@ -205,11 +205,6 @@ class MCTSPolicyAgent:
         cho đến khi game kết thúc.
         Các nước đi được chọn dựa trên xác suất của Mạng Chính Sách.
         """
-        '''
-        có thể cái tiến việc chơi mô phỏng này minimax 
-        nhưng có thể dẫn đến chơi lâu hơn rất nhiều 
-        
-        '''
         current_rollout_game = game_state.copy()
         
         # Đảm bảo mạng ở chế độ đánh giá cho mô phỏng

@@ -101,7 +101,7 @@ def test_agent(num_games, agent1, agent2):
 
 if __name__ == "__main__":
     # Example Usage:
-    num_games_to_play = 10
+    num_games_to_play = 50
 
     # Make sure to replace these with actual instances of your player classes
     # For demonstration, let's use RandomPlayer and another RandomPlayer
