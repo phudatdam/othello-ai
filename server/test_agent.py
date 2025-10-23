@@ -1,6 +1,6 @@
 from test_environment import OthelloEnv  # Môi trường Othello
 from othello import BLACK, WHITE
-from ai.ai_player import QLearningPlayer, RandomPlayer, MinimaxPlayer, MinimaxQLearningPlayer  # Player của bạn
+from ai.ai_player import QLearningPlayer, RandomPlayer, MinimaxPlayer  # Player của bạn
 
 def test_agent(num_games, agent1, agent2):
     """
@@ -73,12 +73,12 @@ def test_agent(num_games, agent1, agent2):
                 # If no valid moves, choose the last action (handle pass)
                 action_gym = env.action_space.n - 1
                 print(f"Player {current_player_color} passes.")
-        
+
             next_observation, reward, terminated, truncated, info = env.step(action_gym)
             done = terminated or truncated
             observation = next_observation
             current_player_color = 3 - current_player_color  # Switch player
-            env.render() # Uncomment to visualize each step
+            #env.render() # Uncomment to visualize each step
 
         print("Game Over!")
         # Determine winner based on the final reward from the perspective of the last player
@@ -127,13 +127,13 @@ def test_agent(num_games, agent1, agent2):
 
 if __name__ == "__main__":
     # Example Usage:
-    num_games_to_play = 2
+    num_games_to_play = 100
 
     # Make sure to replace these with actual instances of your player classes
     # For demonstration, let's use RandomPlayer and another RandomPlayer
     # You would replace these with your trained QLearningPlayer, MiniMax_Player, etc.
     agent_a = MinimaxPlayer(BLACK) # Example: Assuming AIPlayer can be initialized without a color initially
-    agent_b = MinimaxQLearningPlayer(WHITE) # Example: Assuming AIPlayer can be initialized without a color initially
+    agent_b = RandomPlayer(WHITE) # Example: Assuming AIPlayer can be initialized without a color initially
 
     print(f"\n=== Starting {num_games_to_play} games between {str(agent_a)} and {str(agent_b)} ===")
     game_results = test_agent(num_games_to_play, agent_a, agent_b)

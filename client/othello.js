@@ -24,13 +24,17 @@ const renderBoard = (board, boardState) => {
 }
 
 // Display valid moves and make them clickable
-const displayValidMoves = (board, validMoves) => {
+const displayValidMoves = (board, validMoves, turn) => {
     for (const [row, col] of validMoves) {
         const cell = board.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-        cell.dataset.valid = "true";
         const disc = document.createElement('div');
         disc.className = 'disc';
-        disc.classList.add('valid-move');
+        if (turn === BLACK) {
+            cell.dataset.valid = "true";
+            disc.classList.add('valid-move'); // green
+        } else {
+            disc.classList.add('opponent-move'); // red
+        }
         cell.appendChild(disc);
     }
 };
@@ -40,8 +44,11 @@ const updateStatus = (boardState, turn) => {
     const blackScore = boardState.flat().filter(cell => cell === BLACK).length;
     const whiteScore = boardState.flat().filter(cell => cell === WHITE).length;
 
-    document.getElementById("black-score").textContent = `⚫ Black: ${blackScore}`;
-    document.getElementById("white-score").textContent = `⚪ White: ${whiteScore}`;
+    document.getElementById("black-score").textContent = `${blackScore} ⚫`;
+    document.getElementById("white-score").textContent = `⚪ ${whiteScore}`;
+
+    const turnText = turn === BLACK ? "Black's turn" : "White's turn";
+    document.getElementById("turn-indicator").textContent = turnText;
 }
 
 export { EMPTY, BLACK, WHITE, renderBoard, displayValidMoves, updateStatus };
