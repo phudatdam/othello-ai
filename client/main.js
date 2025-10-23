@@ -100,7 +100,7 @@ window.addEventListener("DOMContentLoaded", () => {
     ];
     renderBoard(board, boardState);
     // Open the WebSocket connection and register event handlers.
-    const websocket = new WebSocket("wss://othello-ai-1.onrender.com");
+    const websocket = new WebSocket("wss://othello-ai-1.onrender.com/");
     initGame(websocket);
     receiveMessages(board, websocket);
     sendMoves(board, websocket);
