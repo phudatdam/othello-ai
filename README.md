@@ -5,7 +5,16 @@ Chương trình cờ Othello với các chế độ chơi:
 - **Thi đấu online:** Giữa các người chơi.
 - **Chế độ solo:** Người chơi thi đấu với bot AI.
 - **Sàn đấu AI:** Các bot AI thi đấu với nhau.
-
+## Hướng dẫn truy cập bằng web online
+1. **Truy cập đường dẫn:**
+- `https://othello-ai-1.onrender.com`
+- Nếu gặp lỗi, reload trang cho đến khi gặp thông báo sau thì chuyển sang bước 2:
+    ```bash
+    Failed to open a WebSocket connection: missing Connection header.
+    You cannot access a WebSocket server directly with a browser. You need a WebSocket client.
+2. **Truy cập đường dẫn:**
+- `https://othello-ai-2.onrender.com`
+- Nếu hiện 4 ô tròn màu xanh có nghĩa là đã sẵn sàng để chơi. Nhấn nút Solo chơi với bot.
 ## Cài đặt
 
 1. **Cài đặt thư viện `websockets`:**
