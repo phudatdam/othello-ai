@@ -95,3 +95,16 @@ class QLearningPlayer:
         best_action = max(valid_moves, key=lambda a: q_values[a[0] * 8 + a[1]])
         return best_action
 
+minimax_q_model_path = "models/minimax_q_cnn.pt"
+class MinimaxQPlayer:
+    """Agent Minimax Q-learning đã train bằng train_minimax_q_vs_ran.py."""
+
+    def __init__(self, player, path=minimax_q_model_path):
+        from network.minimax_q_learning import MinimaxQAgent
+        self.player = player
+        self.agent = MinimaxQAgent()
+        self.agent.load(path)
+        self.agent.model.eval()
+
+    def play(self, game):
+        return self.agent.choose_action(game.board_state, self.player, greedy=True)
