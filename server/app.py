@@ -1,7 +1,7 @@
 import asyncio
 import json
 import secrets
-
+import os
 from websockets.asyncio.server import broadcast, serve
 
 from othello import BLACK, WHITE, Game
@@ -221,7 +221,10 @@ async def handler(websocket):
 
 
 async def main():
-    async with serve(handler, "0.0.0.0", 8001) as server:
+    port = int(os.environ.get("PORT", 8001))
+    host = "0.0.0.0"
+
+    async with serve(handler, host, port) as server:
         await server.serve_forever()
 
 

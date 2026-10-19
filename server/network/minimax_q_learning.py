@@ -1,192 +1,282 @@
+"""
+Minimax Q-learning cho Othello (bản cải tiến).
+
+Ý tưởng giữ nguyên như bản cũ: agent chọn nước a = argmax_a min_o Q(s, a, o).
+Khác biệt:
+- Thay vì đưa (s, a, o) dạng 4 tọa độ vào mạng, ta đánh giá thẳng bàn cờ SAU khi
+  đi a và o: Q(s, a, o) = V(s_{a,o}). Input vẫn chỉ là 64 ô (mình = 1, địch = -1).
+- Mạng CNN trên lưới 8x8 thay cho MLP.
+- Toàn bộ lá (a, o) được đánh giá trong MỘT lần forward (batch), luật cờ dùng bitboard
+  nên nhanh hơn rất nhiều so với deepcopy list.
+- Target là lambda-return lấy từ giá trị tìm kiếm max-min ở nước sau (TD-leaf),
+  nên reward cuối ván lan ngược về đầu ván nhanh hơn 1-step TD.
+- Replay buffer + tăng dữ liệu bằng 8 phép đối xứng của bàn cờ.
+
+V(board) luôn là giá trị theo góc nhìn của người SẮP ĐI, trong [-1, 1],
+nên dữ liệu của cả quân Đen lẫn quân Trắng (self-play) dùng chung một mạng.
+"""
+import random
+from collections import deque
+
+import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import numpy as np
-import random
-from othello import Game
-from collections import deque
-import copy
+import torch.nn.functional as F
 
 BLACK = 1
 WHITE = 2
 
-""" Khởi tạo mạng Q-Learning"""
-class MinimaxQNetwork(nn.Module):
-    def __init__(self, input_dim=68, output_dim=1, hidden_dim=256, num_layers=3, learning_rate=0.001):
-        super(MinimaxQNetwork, self).__init__()
-        self.learning_rate = learning_rate
+# ---------------------------------------------------------------------------
+# Bitboard: bit thứ r*8+c là ô (r, c)
+# ---------------------------------------------------------------------------
+FULL = (1 << 64) - 1
+NOT_A = 0xFEFEFEFEFEFEFEFE  # bỏ cột 0
+NOT_H = 0x7F7F7F7F7F7F7F7F  # bỏ cột 7
 
-        layers = []
-        layers.append(nn.Linear(input_dim, hidden_dim))
-        layers.append(nn.Sigmoid())
-        for _ in range(num_layers - 2):
-            layers.append(nn.Linear(hidden_dim, hidden_dim))
-            layers.append(nn.Sigmoid())
-        layers.append(nn.Linear(hidden_dim, output_dim))
-        self.model = nn.Sequential(*layers)
+_SHIFTS = (
+    lambda b: (b << 1) & NOT_A,          # phải
+    lambda b: (b >> 1) & NOT_H,          # trái
+    lambda b: (b << 8) & FULL,           # xuống
+    lambda b: b >> 8,                    # lên
+    lambda b: (b << 9) & NOT_A & FULL,   # xuống-phải
+    lambda b: (b << 7) & NOT_H & FULL,   # xuống-trái
+    lambda b: (b >> 7) & NOT_A,          # lên-phải
+    lambda b: (b >> 9) & NOT_H,          # lên-trái
+)
+
+
+def legal_moves(p, o):
+    """Bitmask các nước hợp lệ của người có quân p, đối thủ có quân o."""
+    empty = ~(p | o) & FULL
+    moves = 0
+    for sh in _SHIFTS:
+        x = sh(p) & o
+        for _ in range(5):
+            x |= sh(x) & o
+        moves |= sh(x) & empty
+    return moves
+
+
+def apply_move(p, o, sq):
+    """Đi ô sq (0..63). Trả về (p_mới, o_mới)."""
+    m = 1 << sq
+    flips = 0
+    for sh in _SHIFTS:
+        f = 0
+        x = sh(m)
+        while x & o:
+            f |= x
+            x = sh(x)
+        if x & p:
+            flips |= f
+    return p | m | flips, o & ~flips
+
+
+def bits(mask):
+    """Liệt kê chỉ số các bit bật."""
+    out = []
+    while mask:
+        low = mask & -mask
+        out.append(low.bit_length() - 1)
+        mask ^= low
+    return out
+
+
+def from_board(board_state, player):
+    """List 8x8 (0/1/2) -> (quân của player, quân đối thủ) dạng bitboard."""
+    p = o = 0
+    for r in range(8):
+        for c in range(8):
+            v = board_state[r][c]
+            if v == player:
+                p |= 1 << (r * 8 + c)
+            elif v != 0:
+                o |= 1 << (r * 8 + c)
+    return p, o
+
+
+def to_board(p, o, player):
+    """Bitboard -> list 8x8 (0/1/2) để dùng với minimax/evaluator cũ."""
+    opp = WHITE if player == BLACK else BLACK
+    board = [[0] * 8 for _ in range(8)]
+    for sq in bits(p):
+        board[sq // 8][sq % 8] = player
+    for sq in bits(o):
+        board[sq // 8][sq % 8] = opp
+    return board
+
+
+_IDX = np.arange(64, dtype=np.uint64)
+
+
+def encode(p, o):
+    """64 ô theo góc nhìn người có quân p: mình = 1, địch = -1, trống = 0."""
+    pb = (np.uint64(p) >> _IDX) & np.uint64(1)
+    ob = (np.uint64(o) >> _IDX) & np.uint64(1)
+    return pb.astype(np.float32) - ob.astype(np.float32)
+
+
+def final_value(p, o):
+    """Kết quả ván theo góc nhìn p: thắng/thua là chính, cộng một chút theo chênh lệch quân."""
+    diff = bin(p).count("1") - bin(o).count("1")
+    return float(np.sign(diff)) * 0.8 + diff / 64.0 * 0.2
+
+
+# ---------------------------------------------------------------------------
+# Mạng giá trị
+# ---------------------------------------------------------------------------
+class MinimaxQNetwork(nn.Module):
+    """CNN trên lưới 8x8, input vẫn là 64 ô."""
+
+    def __init__(self, channels=32, num_blocks=4):
+        super().__init__()
+        self.inp = nn.Conv2d(1, channels, 3, padding=1)
+        self.blocks = nn.ModuleList([nn.Conv2d(channels, channels, 3, padding=1) for _ in range(num_blocks)])
+        self.head = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(channels * 64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+            nn.Tanh(),
+        )
 
     def forward(self, x):
-        return self.model(x)
+        x = x.view(-1, 1, 8, 8)
+        x = F.relu(self.inp(x))
+        for conv in self.blocks:
+            x = F.relu(x + conv(x))  # residual
+        return self.head(x).squeeze(-1)
 
+
+def augment(x):
+    """Chia batch làm 8 phần, mỗi phần áp một trong 8 phép đối xứng của bàn cờ."""
+    x = x.view(-1, 8, 8)
+    out = []
+    for i, g in enumerate(torch.chunk(x, 8)):
+        if i & 4:
+            g = torch.flip(g, dims=(2,))
+        out.append(torch.rot90(g, k=i & 3, dims=(1, 2)))
+    return torch.cat(out).reshape(-1, 64)
+
+
+# ---------------------------------------------------------------------------
+# Agent
+# ---------------------------------------------------------------------------
 class MinimaxQAgent:
-    def __init__(self):
-        self.model = MinimaxQNetwork()
-        self.target_model = MinimaxQNetwork()
-        self.target_model.load_state_dict(self.model.state_dict())
-        self.criterion = nn.MSELoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
-        self.gamma = 0.99
-        self.epsilon = 1.0
-        self.epsilon_min = 0
-        self.epsilon_decay = 0.995
+    def __init__(self, lr=1e-3, buffer_size=200_000, lam=0.7, device="cpu"):
+        self.device = device
+        self.model = MinimaxQNetwork().to(device)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=1e-5)
+        self.memory = deque(maxlen=buffer_size)
+        self.lam = lam
+        self.epsilon = 0.3
+        self.epsilon_min = 0.05
+        self.epsilon_decay = 0.998  # giảm theo ván, không phải theo sample
         self.current_loss = 0.0
         self.losses = []
-        self.memory = deque(maxlen=15000)
-        self.update_target_steps = 1000
-        self.train_step = 0
-        self.max_grad_norm = 1.0
 
-    def encode_state(self, obs):
-        board = obs['board'].reshape(-1)
-        player = obs['turn']
-        if player == WHITE:
-            board = np.where(board == BLACK, -1, board)
-            board = np.where(board == WHITE, 1, board)
-        else:
-            board = np.where(board == BLACK, 1, board)
-            board = np.where(board == WHITE, -1, board)
-        return torch.tensor(board, dtype=torch.float32)
+    # ---- đánh giá -------------------------------------------------------
+    @torch.no_grad()
+    def _values(self, model, states):
+        if not states:
+            return np.zeros(0, dtype=np.float32)
+        x = torch.from_numpy(np.stack(states)).to(self.device)
+        return model(x).cpu().numpy()
 
+    def search(self, p, o, model=None):
+        """
+        max_a min_o V(s_{a,o}) cho người có quân p (đang tới lượt).
+        Trả về (danh sách ô hợp lệ, giá trị max-min của từng ô).
+        """
+        model = model or self.model
+        moves = bits(legal_moves(p, o))
+        leaves = []        # trạng thái cần đưa qua mạng
+        leaf_sign = []     # +1: p sắp đi, -1: đối thủ sắp đi
+        children = []      # với mỗi a: list chỉ số lá, hoặc ("v", giá trị cố định)
 
-    def choose_action(self, obs, valid_agent_moves):
-        if random.random() < self.epsilon:
-            return random.choice(valid_agent_moves)
+        def add_leaf(pp, oo, sign):
+            leaves.append(encode(pp, oo))
+            leaf_sign.append(sign)
+            return len(leaves) - 1
 
-        self.model.eval()
-        state_tensor = self.encode_state(obs)
-        best_action = (-1, -1)  # Khởi tạo action không hợp lệ
-        best_value = -float('inf')
+        for a in moves:
+            p1, o1 = apply_move(p, o, a)
+            replies = bits(legal_moves(o1, p1))
+            entries = []
+            if not replies:
+                # đối thủ mất lượt
+                if legal_moves(p1, o1):
+                    entries.append(add_leaf(p1, o1, 1.0))
+                else:
+                    entries.append(("v", final_value(p1, o1)))
+            else:
+                for r in replies:
+                    o2, p2 = apply_move(o1, p1, r)
+                    if legal_moves(p2, o2):
+                        entries.append(add_leaf(p2, o2, 1.0))
+                    elif legal_moves(o2, p2):
+                        # mình mất lượt, đối thủ đi tiếp
+                        entries.append(add_leaf(o2, p2, -1.0))
+                    else:
+                        entries.append(("v", final_value(p2, o2)))
+            children.append(entries)
 
-        # Tạo bản sao game từ observation
-        current_board = np.array(obs['board']).reshape(8, 8).tolist()
-        current_turn = obs['turn']
+        vals = self._values(model, leaves) * np.array(leaf_sign, dtype=np.float32)
+        scores = [min(e[1] if isinstance(e, tuple) else float(vals[e]) for e in entries)
+                  for entries in children]
+        return moves, scores
 
-        for a in valid_agent_moves:
-            # Tạo bản sao sâu để mô phỏng
-            temp_game = Game()
-            temp_game.board_state = copy.deepcopy(current_board)
-            temp_game.turn = current_turn
+    def choose(self, p, o, greedy=False, model=None):
+        """Trả về (ô được chọn, giá trị max-min của trạng thái)."""
+        moves, scores = self.search(p, o, model)
+        best = int(np.argmax(scores))
+        value = scores[best]
+        if not greedy and random.random() < self.epsilon:
+            return random.choice(moves), value
+        return moves[best], value
 
-            # Thực hiện action của agent
-            try:
-                temp_game.play(temp_game.turn, a[0], a[1])
-            except ValueError:
-                continue  # Bỏ qua action không hợp lệ
+    # ---- API dùng với Game (board_state dạng list) -----------------------
+    def choose_action(self, board_state, player, greedy=True):
+        p, o = from_board(board_state, player)
+        if not legal_moves(p, o):
+            return None
+        sq, _ = self.choose(p, o, greedy=greedy)
+        return divmod(sq, 8)
 
-            # Lấy nước đi hợp lệ của đối thủ
-            valid_opponent_moves = temp_game.get_valid_moves
-            if not valid_opponent_moves:
-                return a  # Đối thủ không có nước đi
+    # ---- học -------------------------------------------------------------
+    def store_game(self, states, search_values, final_z):
+        """
+        states[t]: trạng thái lúc agent tới lượt (encode theo góc nhìn agent)
+        search_values[t]: giá trị max-min tính được tại states[t]
+        final_z: kết quả cuối ván theo góc nhìn agent
+        Target lambda-return: G_t = (1-lam) * search_values[t+1] + lam * G_{t+1}
+        """
+        g = final_z
+        for t in reversed(range(len(states))):
+            if t + 1 < len(states):
+                g = (1 - self.lam) * search_values[t + 1] + self.lam * g
+            self.memory.append((states[t], g))
 
-            # Tính min Q-value cho từng phản ứng của đối thủ
-            min_q = float('inf')
-            for o in valid_opponent_moves:
-                # Tạo input tensor: state + (a, o)
-                input_tensor = torch.cat([
-                    state_tensor,
-                    torch.tensor([a[0], a[1], o[0], o[1]], dtype=torch.float32)
-                ]).unsqueeze(0)
-                
-                with torch.no_grad():
-                    q_val = self.model(input_tensor).item()
-                
-                min_q = min(min_q, q_val)
-
-            if min_q > best_value:
-                best_value = min_q
-                best_action = a
-
-        self.model.train()
-        return best_action
-
-    def replay_buffer_save(self, state, action, opponent_action, reward, next_state, done):
-        self.memory.append((state, action, opponent_action, reward, next_state, done))
-
-    def replay(self, batch_size):
+    def replay(self, batch_size=256):
         if len(self.memory) < batch_size:
             return
-
-        minibatch = random.sample(self.memory, batch_size)
-        losses = []
-
-        for state, action, opponent_action, reward, next_state, done in minibatch:
-            state_tensor = state
-            next_state_tensor = next_state
-
-            input_tensor = torch.cat([
-                state_tensor,
-                torch.tensor([action[0], action[1], opponent_action[0], opponent_action[1]], dtype=torch.float32)
-            ]).unsqueeze(0)
-
-            if done:
-                target = torch.tensor([[reward]], dtype=torch.float32)
-            else:
-                # Tính V[next_state] = max_a' min_o' Q(next_state, a', o')
-                # Chuyển next_state_tensor thành board 8x8 và turn
-                board_arr = next_state_tensor.detach().cpu().numpy().reshape(8, 8)
-
-                # Chuyển board_arr sang định dạng Game
-                converted_board = np.where(board_arr == -1, 2, board_arr)  # -1 -> 2
-                converted_board = np.where(converted_board == 1, 1, converted_board)  # 1 -> 1
-
-                temp_game = Game()
-                temp_game.board_state = converted_board.astype(int).tolist()
-
-                temp_game.turn = WHITE  # hoặc lấy từ next_state nếu có
-                valid_agent_moves = temp_game.get_valid_moves
-
-                max_min_q = -float('inf')
-                for a_prime in valid_agent_moves:
-                    temp_game_copy = Game()
-                    temp_game_copy.board_state = copy.deepcopy(temp_game.board_state)
-                    temp_game_copy.turn = temp_game.turn
-                    temp_game_copy.play(temp_game_copy.turn, a_prime[0], a_prime[1])
-                    valid_opponent_moves = temp_game_copy.get_valid_moves
-
-                    if not valid_opponent_moves:
-                        min_q = 0.0
-                    else:
-                        min_q = float('inf')
-                        for o_prime in valid_opponent_moves:
-                            
-                            next_input = torch.cat([
-                                next_state_tensor,
-                                torch.tensor([a_prime[0], a_prime[1], o_prime[0], o_prime[1]], dtype=torch.float32)
-                            ]).unsqueeze(0)
-                            with torch.no_grad():
-                                q_val = self.target_model(next_input).item()
-                            min_q = min(min_q, q_val)
-
-                    max_min_q = max(max_min_q, min_q)
-
-                target = torch.tensor([[reward + self.gamma * max_min_q]], dtype=torch.float32)
-
-            pred = self.model(input_tensor)
-            loss = self.criterion(pred, target)
-            print(pred, target)
-            self.current_loss = loss.item()
-            self.losses.append(self.current_loss)
-            self.optimizer.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
-            self.optimizer.step()
-
-            self.train_step += 1
-            if self.train_step % self.update_target_steps == 0:
-                self.target_model.load_state_dict(self.model.state_dict())
-
-        self.current_loss = np.mean(losses)
+        batch = random.sample(self.memory, batch_size)
+        x = torch.from_numpy(np.stack([s for s, _ in batch])).to(self.device)
+        y = torch.tensor([g for _, g in batch], dtype=torch.float32, device=self.device)
+        pred = self.model(augment(x))
+        loss = F.smooth_l1_loss(pred, y)
+        self.optimizer.zero_grad()
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+        self.optimizer.step()
+        self.current_loss = loss.item()
         self.losses.append(self.current_loss)
 
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+    def decay_epsilon(self):
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
+    def save(self, path):
+        torch.save(self.model.state_dict(), path)
+
+    def load(self, path):
+        self.model.load_state_dict(torch.load(path, map_location=self.device))
